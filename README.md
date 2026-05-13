@@ -2,6 +2,8 @@
 
 Master any subject. Track your progress.
 
+🌐 **Live**: [https://inknikk.github.io/quizora/](https://inknikk.github.io/quizora/)
+
 A React + Vite quiz application with Firebase authentication and Firestore for storing quiz banks, user profiles, and results.
 
 ## Features
