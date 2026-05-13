@@ -1,8 +1,30 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@400;700&family=DM+Mono:wght@400;500&family=Jost:wght@400;500;600;700&display=swap');
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-:root,
+/* ── spacing scale & shared tokens ── */
+:root {
+  --space-xs: 0.5rem;
+  --space-sm: 0.85rem;
+  --space-md: 1.5rem;
+  --space-lg: 2.5rem;
+  --space-xl: 4.5rem;
+  --content-wide: 1100px;
+  --content-max: 960px;
+  --content-narrow: 680px;
+  --pad-main: 2rem;
+  --radius-sm: 0.625rem;
+  --radius-md: 0.875rem;
+  --radius-lg: 1.25rem;
+}
+[data-corners="square"] {
+  --radius-sm: 0;
+  --radius-md: 0;
+  --radius-lg: 0;
+}
+
+/* ── Midnight (default dark) ── */
+:root:not([data-theme]),
 [data-theme="midnight"],
 [data-theme="dark"] {
   --accent: hsl(230 72% 62%);
@@ -21,9 +43,6 @@
   --warning-bg: hsl(40 65% 16%);
   --danger: hsl(0 72% 64%);
   --danger-bg: hsl(0 55% 18%);
-  --radius-sm: 0.75rem;
-  --radius-md: 1rem;
-  --radius-lg: 1.5rem;
   --glass-bg: hsl(230 22% 15% / 0.7);
   --glass-border: hsl(230 18% 25% / 0.45);
   --glow-1: hsl(230 55% 16%);
@@ -51,8 +70,10 @@
   --stat-icon-gold: hsl(40 88% 62%);
   --quiz-opt-hover-bg: hsl(230 55% 14%);
   --quiz-opt-selected-bg: hsl(230 60% 16%);
+  --text-on-accent: #fff;
 }
 
+/* ── Dawn ── */
 [data-theme="dawn"] {
   --accent: hsl(15 80% 52%);
   --accent2: hsl(30 85% 52%);
@@ -97,8 +118,10 @@
   --stat-icon-gold: hsl(40 90% 55%);
   --quiz-opt-hover-bg: hsl(15 55% 90%);
   --quiz-opt-selected-bg: hsl(15 55% 85%);
+  --text-on-accent: #fff;
 }
 
+/* ── Forest ── */
 [data-theme="forest"] {
   --accent: hsl(160 72% 48%);
   --accent2: hsl(140 42% 55%);
@@ -143,8 +166,10 @@
   --stat-icon-gold: hsl(40 82% 58%);
   --quiz-opt-hover-bg: hsl(160 50% 14%);
   --quiz-opt-selected-bg: hsl(160 50% 16%);
+  --text-on-accent: #fff;
 }
 
+/* ── Ember ── */
 [data-theme="ember"] {
   --accent: hsl(22 85% 54%);
   --accent2: hsl(12 78% 56%);
@@ -162,9 +187,6 @@
   --warning-bg: hsl(40 60% 16%);
   --danger: hsl(0 70% 60%);
   --danger-bg: hsl(0 55% 17%);
-  --radius-sm: 0.75rem;
-  --radius-md: 1rem;
-  --radius-lg: 1.5rem;
   --glass-bg: hsl(18 16% 13% / 0.7);
   --glass-border: hsl(18 12% 24% / 0.45);
   --glow-1: hsl(22 55% 14%);
@@ -192,6 +214,7 @@
   --stat-icon-gold: hsl(40 85% 60%);
   --quiz-opt-hover-bg: hsl(22 55% 13%);
   --quiz-opt-selected-bg: hsl(22 55% 15%);
+  --text-on-accent: #fff;
 }
 
 html { font-size: 16px; -webkit-text-size-adjust: 100%; }
@@ -199,26 +222,26 @@ body {
   font-family: 'Inter', system-ui, sans-serif;
   background: var(--bg);
   color: var(--text);
-  line-height: 1.5;
+  line-height: 1.6;
   min-height: 100vh;
-  transition: background 0.3s, color 0.3s;
+  transition: background 0.35s ease, color 0.35s ease;
 }
 
 .glass {
   background: var(--glass-bg);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   border: 1px solid var(--glass-border);
   transition: background 0.3s, border 0.3s;
 }
 
 .btn-primary {
   width: 100%;
-  padding: 0.85rem;
+  padding: 0.85rem 1.25rem;
   border-radius: var(--radius-sm);
   border: none;
   background: linear-gradient(135deg, var(--accent), var(--accent2));
-  color: #fff;
+  color: var(--text-on-accent);
   font-size: 0.95rem;
   font-weight: 600;
   cursor: pointer;
@@ -226,13 +249,27 @@ body {
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  transition: opacity 0.2s;
+  transition: opacity 0.2s, transform 0.15s;
 }
-.btn-primary:hover:not(:disabled) { opacity: 0.85; }
-.btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-primary:hover:not(:disabled) { opacity: 0.88; transform: translateY(-1px); }
+.btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
 
 .accent { color: var(--accent); }
+
+[class*="-bg"],
+[class*="glow"] {
+  pointer-events: none;
+}
 
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: var(--bg); }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+@media (max-width: 640px) {
+  :root {
+    --space-md: 1rem;
+    --space-lg: 1.5rem;
+    --space-xl: 2.5rem;
+    --pad-main: 1rem;
+  }
+}

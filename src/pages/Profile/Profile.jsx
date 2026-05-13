@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { getUserResults } from '../../firebase/firestore';
-import { logoutUser } from '../../firebase/auth';
-import { ChevronLeft, LogOut, Trophy, Target, Zap } from 'lucide-react';
+import { getUserResults, getUserAccuracy, getUserLongestStreak } from '../../firebase/firestore';
+import { logoutUser, updateUserDisplayName } from '../../firebase/auth';
+import { ChevronLeft, LogOut, Flame, Target, Zap, Pencil } from 'lucide-react';
 import './Profile.css';
 
 const THEMES = [
@@ -14,29 +14,46 @@ const THEMES = [
 ];
 
 export default function Profile() {
-  const { user, profile, setTheme } = useAuth();
+  const { user, profile, setTheme, setCorners, setProfile } = useAuth();
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [accuracy, setAccuracy] = useState(null);
+  const [longestStreak, setLongestStreak] = useState(0);
+  const [editingName, setEditingName] = useState(false);
+  const [editName, setEditName] = useState('');
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
   const navigate = useNavigate();
+
+  async function handleSaveName() {
+    const trimmed = editName.trim();
+    if (!trimmed || !user) return;
+    await updateUserDisplayName(user.uid, trimmed);
+    setProfile(prev => ({ ...prev, displayName: trimmed }));
+    setEditingName(false);
+  }
 
   useEffect(() => {
     if (user) {
-      getUserResults(user.uid).then(r => { setResults(r); setLoading(false); });
+      getUserResults(user.uid).then(r => { setResults(r); setLoading(false); }).catch(() => setLoading(false));
+      getUserAccuracy(user.uid).then(a => {
+        if (a.totalQuestions > 0) {
+          setAccuracy(Math.min(100, Math.round((a.totalCorrect / a.totalQuestions) * 100)));
+        }
+      });
+      getUserLongestStreak(user.uid).then(s => setLongestStreak(s ?? 0)).catch(() => setLongestStreak(0));
     }
   }, [user]);
 
-  async function handleLogout() {
+  function handleLogoutClick() { setShowLogoutModal(true); }
+
+  async function confirmLogout() {
+    setShowLogoutModal(false);
     await logoutUser();
     navigate('/auth');
   }
 
-  const resultsAccuracy = (() => {
-    let totalCorrect = 0, totalQuestions = 0;
-    results.forEach(r => { totalCorrect += r.score || 0; totalQuestions += r.total || 0; });
-    return totalQuestions > 0 ? Math.min(100, Math.round((totalCorrect / totalQuestions) * 100)) : null;
-  })();
-
-  const initials = user?.displayName?.split(' ').map(n => n[0]).join('').slice(0,2).toUpperCase() || '?';
+  const displayName = profile?.displayName || user?.displayName || '';
+  const initials = displayName.split(' ').map(n => n[0]).join('').slice(0,2).toUpperCase() || '?';
 
   return (
     <div className="profile-page">
@@ -45,7 +62,7 @@ export default function Profile() {
         <div className="profile-topbar glass">
           <button className="icon-btn" onClick={() => navigate('/')}><ChevronLeft size={20}/></button>
           <h2>My Profile</h2>
-          <button className="icon-btn" onClick={handleLogout}><LogOut size={20}/></button>
+          <button className="icon-btn" onClick={handleLogoutClick}><LogOut size={20}/></button>
         </div>
 
         <div className="profile-hero glass">
@@ -54,35 +71,58 @@ export default function Profile() {
           ) : (
             <div className="avatar">{initials}</div>
           )}
-          <div className="profile-name">{user?.displayName || 'User'}</div>
+          <div className="profile-name-row">
+            {editingName ? (
+              <input className="name-input" type="text" value={editName}
+                onChange={e => setEditName(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') handleSaveName(); if (e.key === 'Escape') setEditingName(false); }}
+                onBlur={handleSaveName} autoFocus />
+            ) : (
+              <>
+                <span className="profile-name">{profile?.displayName || user?.displayName || 'User'}</span>
+                <button className="icon-btn icon-btn--sm" onClick={() => { setEditName(displayName); setEditingName(true); }}>
+                  <Pencil size={14}/>
+                </button>
+              </>
+            )}
+          </div>
           <div className="profile-email">{user?.email}</div>
         </div>
 
-        <div className="theme-section">
-          <h3>Theme</h3>
-          <div className="theme-grid">
+        <div className="appearance-section">
+          <h3>Appearance</h3>
+          <div className="appearance-themes">
             {THEMES.map(t => {
               const active = profile?.theme === t.id;
               return (
-                <button key={t.id} className={`theme-card ${active ? 'active' : ''}`} onClick={() => setTheme(t.id)}>
-                  <div className="theme-swatch">
-                    {t.colors.map((c, i) => <span key={i} className="swatch-bar" style={{ background: c }}/>)}
+                <button key={t.id} className={`app-theme ${active ? 'active' : ''}`} onClick={() => setTheme(t.id)}>
+                  <div className="app-swatch">
+                    {t.colors.map((c, i) => <span key={i} className="app-bar" style={{ background: c }}/>)}
                   </div>
-                  <div className="theme-info">
-                    <div className="theme-name">{t.label}</div>
-                    <div className="theme-desc">{t.desc}</div>
-                  </div>
-                  {active && <div className="theme-check">✓</div>}
+                  <span className="app-label">{t.label}</span>
+                  {active && <span className="app-check">✓</span>}
                 </button>
               );
             })}
           </div>
+          <div className="appearance-corners">
+            <button className={`app-corner ${profile?.corners !== 'square' ? 'active' : ''}`} onClick={() => setCorners('rounded')}>
+              <span className="app-corner-dots rounded-preview">◉◉◉</span>
+              <span className="app-label">Rounded</span>
+              {profile?.corners !== 'square' && <span className="app-check">✓</span>}
+            </button>
+            <button className={`app-corner ${profile?.corners === 'square' ? 'active' : ''}`} onClick={() => setCorners('square')}>
+              <span className="app-corner-dots square-preview">◻◻◻</span>
+              <span className="app-label">Straight</span>
+              {profile?.corners === 'square' && <span className="app-check">✓</span>}
+            </button>
+          </div>
         </div>
 
         <div className="profile-stats">
-          <div className="pstat glass"><Zap size={20} className="ps-icon purple"/><div className="ps-val">{results.length}</div><div className="ps-lbl">Quizzes</div></div>
-          <div className="pstat glass"><Target size={20} className="ps-icon blue"/><div className="ps-val">{resultsAccuracy !== null ? `${resultsAccuracy}%` : '—'}</div><div className="ps-lbl">Accuracy</div></div>
-          <div className="pstat glass"><Trophy size={20} className="ps-icon gold"/><div className="ps-val">{results.reduce((s, r) => s + (r.score||0), 0)}</div><div className="ps-lbl">Correct</div></div>
+          <div className="pstat glass"><Zap size={20} className="ps-icon purple"/><div className="ps-val">{profile?.totalQuizzes ?? 0}</div><div className="ps-lbl">Quizzes</div></div>
+          <div className="pstat glass"><Target size={20} className="ps-icon blue"/><div className="ps-val">{accuracy !== null ? `${accuracy}%` : '—'}</div><div className="ps-lbl">Accuracy</div></div>
+          <div className="pstat glass"><Flame size={20} className="ps-icon gold"/><div className="ps-val">{profile?.longestStreak ?? longestStreak}</div><div className="ps-lbl">Best Streak</div></div>
         </div>
 
         <h3 className="history-title">Recent Results</h3>
@@ -107,6 +147,19 @@ export default function Profile() {
           </div>
         )}
       </div>
+
+      {showLogoutModal && (
+        <div className="modal-overlay" onClick={() => setShowLogoutModal(false)}>
+          <div className="modal-box glass" onClick={e => e.stopPropagation()}>
+            <h3 className="modal-title">Sign out?</h3>
+            <p className="modal-desc">You'll need to sign in again to access your quizzes and stats.</p>
+            <div className="modal-actions">
+              <button className="btn-nav" onClick={() => setShowLogoutModal(false)}>Cancel</button>
+              <button className="btn-submit" onClick={confirmLogout}>Sign Out</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

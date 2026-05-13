@@ -16,7 +16,7 @@ export async function getQuizBank(id) {
 }
 
 // --- Results ---
-export async function saveResult(uid, bankId, score, total, answers) {
+export async function saveResult(uid, bankId, score, total, answers, bestStreak) {
   await addDoc(collection(db, 'results'), {
     uid,
     bankId,
@@ -24,6 +24,7 @@ export async function saveResult(uid, bankId, score, total, answers) {
     total,
     percentage: Math.round((score / total) * 100),
     answers,
+    bestStreak: bestStreak || 0,
     completedAt: serverTimestamp(),
   });
 }
@@ -60,4 +61,26 @@ export async function getUserAccuracy(uid) {
     totalQuestions += d.data().total || 0;
   });
   return { totalCorrect, totalQuestions, totalQuizzes: snap.docs.length };
+}
+
+export async function getUserLongestStreak(uid) {
+  const ref = collection(db, 'results');
+  const q = query(ref, where('uid', '==', uid), orderBy('completedAt', 'asc'));
+  const snap = await getDocs(q);
+  let streak = 0;
+  let longest = 0;
+  for (const d of snap.docs) {
+    const data = d.data();
+    if ((data.bestStreak || 0) > longest) longest = data.bestStreak;
+    const answers = data.answers || [];
+    for (const a of answers) {
+      if (a.isCorrect) {
+        streak++;
+        if (streak > longest) longest = streak;
+      } else {
+        streak = 0;
+      }
+    }
+  }
+  return longest;
 }

@@ -3,14 +3,14 @@ import { useParams, useSearchParams, useNavigate, useLocation } from 'react-rout
 import { useAuth } from '../../context/AuthContext';
 import { getQuizBank, saveResult } from '../../firebase/firestore';
 import { updateUserStats } from '../../firebase/auth';
-import { ChevronLeft, ChevronRight, Flag, Clock, CheckCircle, ZapOff } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Flag, Clock, CheckCircle, ZapOff, Flame } from 'lucide-react';
 import toast from 'react-hot-toast';
 import './Quiz.css';
 
 const NONE_OPTION = 'None of the above';
 const RAPID_COUNT = 20;
-const SECONDS_PER_QUESTION = Math.round((80 * 60) / 65);
-const RAPID_SECONDS_PER_QUESTION = Math.round(SECONDS_PER_QUESTION / 3);
+const SECONDS_PER_QUESTION = Math.ceil(Math.round((80 * 60) / 65) * 0.9);
+const RAPID_SECONDS_PER_QUESTION = 22;
 
 function shuffle(arr) {
   return [...arr].sort(() => Math.random() - 0.5);
@@ -20,7 +20,7 @@ export default function Quiz() {
   const { id } = useParams();
   const [searchParams] = useSearchParams();
   const location = useLocation();
-  const { user } = useAuth();
+  const { user, setProfile } = useAuth();
   const navigate = useNavigate();
   const submittingRef = useRef(false);
   const [bank, setBank] = useState(null);
@@ -32,6 +32,9 @@ export default function Quiz() {
   const [timeLeft, setTimeLeft] = useState(null);
   const [loading, setLoading] = useState(true);
   const [questionStatus, setQuestionStatus] = useState({});
+  const [streak, setStreak] = useState(0);
+  const bestStreakRef = useRef(0);
+  const [showExitModal, setShowExitModal] = useState(false);
 
   const isRapid = searchParams.get('rapid') === '1';
 
@@ -71,6 +74,25 @@ export default function Quiz() {
   }, [id, isRapid, location.state]);
 
   useEffect(() => {
+    if (submitted) return;
+    const handler = (e) => { e.preventDefault(); e.returnValue = ''; };
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, [submitted]);
+
+  useEffect(() => {
+    if (streak > bestStreakRef.current) bestStreakRef.current = streak;
+  }, [streak]);
+
+  useEffect(() => {
+    if (submitted) return;
+    function onPop() { setShowExitModal(true); }
+    window.addEventListener('popstate', onPop);
+    window.history.pushState(null, '');
+    return () => window.removeEventListener('popstate', onPop);
+  }, [submitted]);
+
+  useEffect(() => {
     if (timeLeft === null || submitted) return;
     if (timeLeft <= 0) { handleSubmit(); return; }
     const t = setTimeout(() => setTimeLeft(t => t - 1), 1000);
@@ -95,6 +117,7 @@ export default function Quiz() {
     setSelected(prev => ({ ...prev, [current]: [opt] }));
     const isCorrect = q.correctAnswers[0] === opt;
     setQuestionStatus(prev => ({ ...prev, [current]: { answered: true, correct: isCorrect, checked: true } }));
+    setStreak(prev => isCorrect ? prev + 1 : 0);
   }
 
   function toggleMultiOption(opt) {
@@ -116,6 +139,7 @@ export default function Quiz() {
     const isCorrect = q.correctAnswers.length === sel.length &&
       q.correctAnswers.every(a => sel.includes(a));
     setQuestionStatus(prev => ({ ...prev, [current]: { answered: true, correct: isCorrect, checked: true } }));
+    setStreak(prev => isCorrect ? prev + 1 : 0);
   }
 
   function toggleFlag() {
@@ -145,9 +169,11 @@ export default function Quiz() {
         q.correctAnswers.every(a => (selected[i]||[]).includes(a))
     }));
     if (user) {
+      const bs = bestStreakRef.current;
       try {
-        await saveResult(user.uid, id, correct, questions.length, answers);
-        await updateUserStats(user.uid, correct, questions.length);
+        await saveResult(user.uid, id, correct, questions.length, answers, bs);
+        const newStreak = await updateUserStats(user.uid, correct, questions.length, bs);
+        if (newStreak > 0) setProfile(prev => ({ ...prev, longestStreak: newStreak }));
       } catch { /* silent */ }
     }
     navigate('/results', { state: { correct, total: questions.length, answers, bankTitle: bank?.title || 'Rapid Quiz' } });
@@ -166,7 +192,7 @@ export default function Quiz() {
       <div className="quiz-bg"/>
       <div className="quiz-container">
         <div className="quiz-topbar glass">
-          <button className="icon-btn" onClick={() => navigate('/')}><ChevronLeft size={20}/></button>
+          <button className="icon-btn" onClick={() => { if (submitted) navigate('/'); else setShowExitModal(true); }}><ChevronLeft size={20}/></button>
           <div className="quiz-info">
             <span className="quiz-title-sm">
               {bank ? bank.title + (isRapid ? ' · Rapid' : '') : 'Rapid Quiz'}
@@ -175,6 +201,11 @@ export default function Quiz() {
           </div>
           <div className="quiz-right-bar">
             {isRapid && <ZapOff size={16} className="rapid-icon" style={{color:'var(--warning)'}}/>}
+            {streak >= 1 && (
+              <div className="streak-badge" key={streak}>
+                <Flame size={15} /> {streak}
+              </div>
+            )}
             {timeLeft !== null && (
               <div className={`timer ${timeLeft < 60 ? 'timer-warn' : ''}`}>
                 <Clock size={14}/> {mins}:{secs}
@@ -248,6 +279,19 @@ export default function Quiz() {
             <button className="btn-submit" onClick={handleSubmit} disabled={submitted}>Submit Quiz</button>
           )}
         </div>
+
+        {showExitModal && (
+          <div className="modal-overlay" onClick={() => { setShowExitModal(false); window.history.pushState(null, ''); }}>
+            <div className="modal-box glass" onClick={e => e.stopPropagation()}>
+              <h3 className="modal-title">Leave quiz?</h3>
+              <p className="modal-desc">Your progress will be lost if you leave before submitting.</p>
+              <div className="modal-actions">
+                <button className="btn-nav" onClick={() => { setShowExitModal(false); window.history.pushState(null, ''); }}>Stay</button>
+                <button className="btn-submit" onClick={() => { setShowExitModal(false); navigate('/'); }}>Leave</button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

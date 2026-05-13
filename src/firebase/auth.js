@@ -59,16 +59,32 @@ export async function getUserProfile(uid) {
   return snap.exists() ? snap.data() : null;
 }
 
-export async function updateUserStats(uid, correct, total) {
+export async function updateUserStats(uid, correct, total, bestStreak) {
   const ref = doc(db, 'users', uid);
-  await updateDoc(ref, {
+  const updates = {
     totalQuizzes: increment(1),
     totalCorrect: increment(correct),
     totalQuestions: increment(total),
     lastActive: serverTimestamp(),
-  });
+  };
+  if (bestStreak > 0) {
+    const snap = await getDoc(ref);
+    const current = snap.data()?.longestStreak || 0;
+    if (bestStreak > current) updates.longestStreak = bestStreak;
+  }
+  await updateDoc(ref, updates);
+  return updates.longestStreak || 0;
 }
 
 export async function updateUserTheme(uid, theme) {
   await updateDoc(doc(db, 'users', uid), { theme });
+}
+
+export async function updateUserCorners(uid, corners) {
+  await updateDoc(doc(db, 'users', uid), { corners });
+}
+
+export async function updateUserDisplayName(uid, displayName) {
+  await updateProfile(auth.currentUser, { displayName });
+  await updateDoc(doc(db, 'users', uid), { displayName });
 }
