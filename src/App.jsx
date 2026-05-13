@@ -21,7 +21,7 @@ function Protected({ children }) {
 export default function App() {
   return (
     <AuthProvider>
-      <BrowserRouter>
+      <BrowserRouter basename="/quizora">
         <Toaster position="top-center" toastOptions={{ style: { background:'var(--surface2)', color:'var(--text)', border:'1px solid var(--border-light)' } }}/>
         <Routes>
           <Route path="/auth" element={<Auth />} />
