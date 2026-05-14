@@ -10,6 +10,7 @@ initializeApp({ credential: cert(serviceAccount) });
 const db = getFirestore();
 function parseMarkedBank(text) {
   const questions = [];
+  text = text.replace(/\r/g, '');
   const blocks = text.split(/\n---\n/).filter(b => b.trim());
   for (const block of blocks) {
     const lines = block.split('\n').map(l => l.trim()).filter(Boolean);
@@ -43,6 +44,11 @@ const BANKS = [
   { file: `${AWS_DIR}/BANK INDIAN 2AWS (44MCQS).md`,title: 'AWS Practice — Set B', category:'AWS', difficulty:'Hard' },
   { file: `${AWS_DIR}/BANK INDIAN 2.5 (25MCQS).md`, title: 'AWS Practice — Set C', category:'AWS', difficulty:'Hard' },
   { file: `${AWS_DIR}/BANK INDIAN 3AWS (50MCQS).md`,title: 'AWS Practice — Set D', category:'AWS', difficulty:'Hard' },
+  { file: `${AWS_DIR}/AWS PRACTITIONER 1.md`,  title: 'AWS Practitioner 1', category:'AWS', difficulty:'Easy' },
+  { file: `${AWS_DIR}/AWS PRACTITIONER 2.md`,  title: 'AWS Practitioner 2', category:'AWS', difficulty:'Easy' },
+  { file: `${AWS_DIR}/AWS PRACTITIONER 3.md`,  title: 'AWS Practitioner 3', category:'AWS', difficulty:'Easy' },
+  { file: `${AWS_DIR}/AWS PRACTITIONER 4.md`,  title: 'AWS Practitioner 4', category:'AWS', difficulty:'Easy' },
+  { file: `${AWS_DIR}/AWS PRACTITIONER 5.md`,  title: 'AWS Practitioner 5', category:'AWS', difficulty:'Easy' },
 ];
 
 async function seed() {

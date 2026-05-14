@@ -3,7 +3,7 @@ import { useParams, useSearchParams, useNavigate, useLocation } from 'react-rout
 import { useAuth } from '../../context/AuthContext';
 import { getQuizBank, saveResult } from '../../firebase/firestore';
 import { updateUserStats } from '../../firebase/auth';
-import { ChevronLeft, ChevronRight, Flag, Clock, CheckCircle, ZapOff, Flame } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Flag, Clock, CheckCircle, ZapOff, Flame, LogOut } from 'lucide-react';
 import toast from 'react-hot-toast';
 import './Quiz.css';
 
@@ -248,12 +248,6 @@ export default function Quiz() {
             })}
           </div>
 
-          {isAnswered && (
-            <div className={`feedback-banner ${questionStatus[current].correct ? 'fb-correct' : 'fb-wrong'}`}>
-              {questionStatus[current].correct ? '✓ Correct!' : '✕ Not quite — the correct answer is highlighted above.'}
-            </div>
-          )}
-
           {isMulti && !isAnswered && hasSelection && (
             <button className="btn-check" onClick={checkMultiSelect}>
               <CheckCircle size={16}/> Check Answers
@@ -282,12 +276,16 @@ export default function Quiz() {
 
         {showExitModal && (
           <div className="modal-overlay" onClick={() => { setShowExitModal(false); window.history.pushState(null, ''); }}>
-            <div className="modal-box glass" onClick={e => e.stopPropagation()}>
-              <h3 className="modal-title">Leave quiz?</h3>
-              <p className="modal-desc">Your progress will be lost if you leave before submitting.</p>
-              <div className="modal-actions">
-                <button className="btn-nav" onClick={() => { setShowExitModal(false); window.history.pushState(null, ''); }}>Stay</button>
-                <button className="btn-submit" onClick={() => { setShowExitModal(false); navigate('/'); }}>Leave</button>
+            <div className="modal-box" onClick={e => e.stopPropagation()}>
+              <div className="modal-accent modal-accent--danger" />
+              <div className="modal-body">
+                <div className="modal-icon modal-icon--danger"><LogOut size={22} /></div>
+                <h3 className="modal-title">Leave quiz?</h3>
+                <p className="modal-desc">Your progress will be lost if you leave before submitting.</p>
+                <div className="modal-actions">
+                  <button className="btn-nav" onClick={() => { setShowExitModal(false); window.history.pushState(null, ''); }}>Stay</button>
+                  <button className="btn-submit" onClick={() => { setShowExitModal(false); navigate('/'); }}>Leave</button>
+                </div>
               </div>
             </div>
           </div>

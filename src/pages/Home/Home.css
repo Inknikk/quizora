@@ -68,9 +68,12 @@
   border: 1px solid var(--border);
   text-align: center;
   display: flex; flex-direction: column; align-items: center; gap: 0.4rem;
-  transition: transform 0.25s, box-shadow 0.25s;
+  transition: transform 0.3s, box-shadow 0.3s;
   position: relative; overflow: hidden;
+  animation: statCardIn 0.5s ease both;
 }
+.stat-card:nth-child(2) { animation-delay: 0.12s; }
+.stat-card:nth-child(3) { animation-delay: 0.24s; }
 .stat-card:hover { transform: translateY(-4px); box-shadow: 0 12px 40px rgba(0,0,0,0.2); }
 
 .stat-hero {
@@ -83,11 +86,48 @@
   opacity: 0.3; pointer-events: none;
 }
 
-.stat-icon-wrap { width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: var(--surface2); color: var(--accent); margin-bottom: 0.25rem; }
+.stat-icon-wrap {
+  width: 44px; height: 44px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--surface2); color: var(--accent); margin-bottom: 0.25rem;
+  position: relative;
+  transition: transform 0.3s;
+}
+.stat-card:hover .stat-icon-wrap { transform: scale(1.15) rotate(-8deg); }
+
+/* streak flame gets special treatment */
+.stat-card:last-child .stat-icon-wrap {
+  background: linear-gradient(135deg, color-mix(in srgb, var(--warning) 20%, var(--surface2)), var(--surface2));
+  color: var(--warning);
+  animation: flamePulse 2s ease-in-out infinite;
+}
+.stat-card:last-child .stat-icon-wrap::before {
+  content: ''; position: absolute; inset: -6px; border-radius: 50%;
+  background: radial-gradient(circle, color-mix(in srgb, var(--warning) 25%, transparent) 0%, transparent 70%);
+  animation: flameGlow 2s ease-in-out infinite;
+  pointer-events: none;
+}
+
 .stat-value { font-size: 1.85rem; font-weight: 800; color: var(--text); line-height: 1.2; }
 .stat-label { font-size: 0.75rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.6px; }
+
 .stat-progress { width: 100%; height: 4px; background: var(--surface2); border-radius: 999px; margin-top: 0.4rem; overflow: hidden; }
 .stat-progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); border-radius: 999px; transition: width 1s ease; }
+
+@keyframes statCardIn {
+  from { opacity:0; transform: translateY(24px); }
+  to { opacity:1; transform: translateY(0); }
+}
+
+@keyframes flamePulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.12); }
+}
+
+@keyframes flameGlow {
+  0%, 100% { opacity: 0.4; transform: scale(0.95); }
+  50% { opacity: 1; transform: scale(1.1); }
+}
 
 /* ── section blocks ── */
 .section-block {
@@ -144,56 +184,78 @@
 .rapid-card:hover .btn-arrow,
 .bank-card:hover .btn-arrow { transform: translateX(4px); }
 
+/* ── difficulty groups ── */
+.diff-group-header {
+  display: flex; align-items: center; gap: 0.65rem;
+  margin-bottom: 0.85rem;
+}
+.diff-label {
+  font-size: 0.82rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px;
+  padding: 0.2rem 0.7rem; border-radius: 999px;
+}
+.diff-easy { background: var(--success-bg); color: var(--success); }
+.diff-medium { background: var(--warning-bg); color: var(--warning); }
+.diff-hard { background: var(--danger-bg); color: var(--danger); }
+.diff-count { font-size: 0.75rem; color: var(--text-muted); }
+
 /* ── quiz banks ── */
 .banks-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 1.25rem;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 1rem;
+  margin-bottom: var(--space-lg);
 }
 
 .bank-card {
   border-radius: var(--radius-md); cursor: pointer; overflow: hidden;
-  display: flex; background: var(--surface); border: 1px solid var(--border);
+  position: relative;
+  background: var(--surface); border: 1px solid var(--border);
   transition: transform 0.25s, box-shadow 0.25s;
+  display: flex; align-items: stretch;
 }
-.bank-card:hover { transform: translateY(-5px); box-shadow: 0 14px 44px rgba(0,0,0,0.2); }
+.bank-card:hover { transform: translateY(-4px); box-shadow: 0 14px 40px rgba(0,0,0,0.18); }
 
-.bank-accent { width: 5px; flex-shrink: 0; }
-.bank-accent.easy { background: var(--success); }
-.bank-accent.medium { background: var(--warning); }
-.bank-accent.hard { background: var(--danger); }
+.bank-easy { border-top: 3px solid var(--success); }
+.bank-medium { border-top: 3px solid var(--warning); }
+.bank-hard { border-top: 3px solid var(--danger); }
 
-.bank-body { flex: 1; padding: 1.5rem 1.75rem; display: flex; flex-direction: column; gap: 0.6rem; }
-
-.bank-top-row { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
-.bank-badge {
-  display: inline-block; padding: 0.2rem 0.65rem; border-radius: 999px;
-  background: var(--accent-bg); color: var(--badge-accent);
-  font-size: 0.72rem; font-weight: 600;
+.bank-qs-col {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  min-width: 68px; gap: 0.15rem;
 }
-.bank-diff { padding: 0.15rem 0.55rem; border-radius: 999px; font-weight: 600; font-size: 0.7rem; }
-.diff-easy { background: var(--success-bg); color: var(--success); }
-.diff-medium { background: var(--warning-bg); color: var(--warning); }
-.diff-hard { background: var(--danger-bg); color: var(--danger); }
+.bank-easy .bank-qs-col { background: color-mix(in srgb, var(--success) 7%, var(--surface)); }
+.bank-medium .bank-qs-col { background: color-mix(in srgb, var(--warning) 7%, var(--surface)); }
+.bank-hard .bank-qs-col { background: color-mix(in srgb, var(--danger) 7%, var(--surface)); }
 
-.bank-card-title { font-size: 1.1rem; font-weight: 700; color: var(--text); margin: 0; }
-.bank-desc { font-size: 0.85rem; color: var(--text-muted); margin: 0; line-height: 1.55; }
+.bank-qs-num {
+  font-size: 1.35rem; font-weight: 800; line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.bank-easy .bank-qs-num { color: var(--success); }
+.bank-medium .bank-qs-num { color: var(--warning); }
+.bank-hard .bank-qs-num { color: var(--danger); }
 
-.bank-meta { display: flex; align-items: center; gap: 0.8rem; font-size: 0.8rem; color: var(--bank-meta); }
-.bank-qs { font-weight: 600; }
-.bank-qs-label { font-weight: 400; color: var(--text-muted); }
+.bank-qs-lbl { font-size: 0.58rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px; color: var(--text-muted); }
+
+.bank-body {
+  flex: 1; padding: 1rem 1.15rem 1rem 0.85rem;
+  display: flex; flex-direction: column; justify-content: center; gap: 0.3rem;
+}
+
+.bank-card-title { font-size: 0.9rem; font-weight: 600; color: var(--text); margin: 0; line-height: 1.35; }
+
+.bank-meta { font-size: 0.7rem; color: var(--bank-meta); }
 
 .bank-start {
-  margin-top: 0.4rem; padding: 0.55rem 1.1rem; border-radius: 999px; border: none;
-  background: linear-gradient(135deg, var(--accent), var(--accent2));
-  color: var(--text-on-accent); font-weight: 600; font-size: 0.85rem; cursor: pointer;
-  display: flex; align-items: center; gap: 0.35rem; width: fit-content;
-  transition: opacity 0.2s, transform 0.15s;
+  padding: 0; border: none; background: none;
+  color: var(--accent); font-weight: 600; font-size: 0.75rem; cursor: pointer;
+  display: inline-flex; align-items: center; gap: 0.2rem; width: fit-content;
+  transition: opacity 0.2s;
 }
-.bank-start:hover { opacity: 0.85; transform: translateY(-1px); }
+.bank-start:hover { opacity: 0.7; }
 
 .bank-card-skeleton {
-  height: 150px; border-radius: var(--radius-md);
+  height: 90px; border-radius: var(--radius-md);
   background: var(--surface); border: 1px solid var(--border);
   animation: pulse 1.5s infinite;
 }

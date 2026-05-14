@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { getQuizBanks, getUserAccuracy, getUserLongestStreak } from '../../firebase/firestore';
 import { logoutUser } from '../../firebase/auth';
-import { LogOut, User, Zap, Target, Shuffle, ArrowRight, Flame } from 'lucide-react';
+import { Play, LogOut, User, Zap, Target, Shuffle, ArrowRight, Flame } from 'lucide-react';
 import './Home.css';
 
 const RAPID_SET_COUNT = 10;
@@ -43,7 +43,19 @@ export default function Home() {
   const [accuracy, setAccuracy] = useState(0);
   const [longestStreak, setLongestStreak] = useState(0);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [showQuizModal, setShowQuizModal] = useState(false);
+  const [quizTarget, setQuizTarget] = useState(null);
   const navigate = useNavigate();
+
+  function promptQuiz(path, state) {
+    setQuizTarget({ path, state });
+    setShowQuizModal(true);
+  }
+  function confirmQuiz() {
+    if (!quizTarget) return;
+    setShowQuizModal(false);
+    navigate(quizTarget.path, quizTarget.state ? { state: quizTarget.state } : {});
+  }
 
   useEffect(() => {
     getQuizBanks().then(b => { setBanks(b); setLoading(false); });
@@ -108,12 +120,12 @@ export default function Home() {
 
         {profile && (
           <div className="stats-row">
-            <div className="stat-card" style={{ animationDelay: '0ms' }}>
+            <div className="stat-card">
               <div className="stat-icon-wrap"><Zap size={20} /></div>
               <AnimatedStat value={profile.totalQuizzes} />
               <div className="stat-label">Quizzes Taken</div>
             </div>
-            <div className="stat-card stat-hero" style={{ animationDelay: '120ms' }}>
+            <div className="stat-card stat-hero">
               <div className="stat-hero-glow" />
               <div className="stat-icon-wrap"><Target size={20} /></div>
               <AnimatedStat value={accuracy} suffix="%" />
@@ -122,7 +134,7 @@ export default function Home() {
                 <div className="stat-progress-fill" style={{ width: `${accuracy || 0}%` }} />
               </div>
             </div>
-            <div className="stat-card" style={{ animationDelay: '240ms' }}>
+            <div className="stat-card">
               <div className="stat-icon-wrap"><Flame size={20} /></div>
               <AnimatedStat value={profile?.longestStreak ?? longestStreak} />
               <div className="stat-label">Best Streak</div>
@@ -139,7 +151,7 @@ export default function Home() {
               </div>
               <button className="shuffle-btn" onClick={() => {
                 const idx = Math.floor(Math.random() * rapidSets.length);
-                navigate('/quiz/rapid', { state: { rapidQuestions: rapidSets[idx].questions } });
+                promptQuiz('/quiz/rapid', { rapidQuestions: rapidSets[idx].questions });
               }}>
                 <Shuffle size={14} />
                 Shuffle
@@ -147,13 +159,13 @@ export default function Home() {
             </div>
             <div className="rapid-grid">
               {rapidSets.map(set => (
-                <div key={set.id} className="rapid-card" onClick={() => navigate('/quiz/rapid', { state: { rapidQuestions: set.questions } })}>
+                <div key={set.id} className="rapid-card" onClick={() => promptQuiz('/quiz/rapid', { rapidQuestions: set.questions })}>
                   <span className="rapid-num">{set.label}</span>
                   <div className="rapid-meta">
                     <span>{set.questions.length} questions</span>
                     <span>~{Math.floor(set.questions.length * 22 / 60)} min</span>
                   </div>
-                  <button className="rapid-play" onClick={e => { e.stopPropagation(); navigate('/quiz/rapid', { state: { rapidQuestions: set.questions } }); }}>
+                  <button className="rapid-play" onClick={e => { e.stopPropagation(); promptQuiz('/quiz/rapid', { rapidQuestions: set.questions }); }}>
                     Play <ArrowRight size={14} className="btn-arrow" />
                   </button>
                 </div>
@@ -179,43 +191,75 @@ export default function Home() {
               <p>No quizzes available yet.</p>
             </div>
           ) : (
-            <div className="banks-grid">
-              {banks.map(bank => {
-                const diff = (bank.difficulty || 'medium').toLowerCase();
-                return (
-                  <div key={bank.id} className="bank-card" onClick={() => navigate(`/quiz/${bank.id}`)}>
-                    <div className={`bank-accent ${diff}`} />
-                    <div className="bank-body">
-                      <div className="bank-top-row">
-                        <span className="bank-badge">{bank.category || 'General'}</span>
-                        <span className={`bank-diff diff-${diff}`}>{bank.difficulty || 'Medium'}</span>
-                      </div>
-                      <h3 className="bank-card-title">{bank.title}</h3>
-                      <p className="bank-desc">{bank.description || `${bank.questionCount} questions`}</p>
-                      <div className="bank-meta">
-                        <span className="bank-qs">{bank.questionCount} <span className="bank-qs-label">questions</span></span>
-                        <span>~{Math.floor(bank.questionCount * 67 / 60)} min</span>
-                      </div>
-                      <button className="bank-start" onClick={e => { e.stopPropagation(); navigate(`/quiz/${bank.id}`); }}>
-                        Start Quiz <ArrowRight size={14} className="btn-arrow" />
-                      </button>
-                    </div>
+            (() => {
+              const grouped = { easy: [], medium: [], hard: [] };
+              banks.forEach(b => {
+                const d = (b.difficulty || 'medium').toLowerCase();
+                if (grouped[d]) grouped[d].push(b);
+              });
+              Object.values(grouped).forEach(arr => arr.sort((a, b) => a.questionCount - b.questionCount));
+              const sorted = Object.entries(grouped).filter(([, arr]) => arr.length);
+              return sorted.map(([diff, arr]) => (
+                <div key={diff}>
+                  <div className="diff-group-header">
+                    <span className={`diff-label diff-${diff}`}>{diff.charAt(0).toUpperCase() + diff.slice(1)}</span>
+                    <span className="diff-count">{arr.length} bank{arr.length !== 1 ? 's' : ''}</span>
                   </div>
-                );
-              })}
-            </div>
+                  <div className="banks-grid">
+                    {arr.map(bank => (
+                      <div key={bank.id} className={`bank-card bank-${diff}`} onClick={() => promptQuiz(`/quiz/${bank.id}`)}>
+                        <div className="bank-qs-col">
+                          <span className="bank-qs-num">{bank.questionCount}</span>
+                          <span className="bank-qs-lbl">questions</span>
+                        </div>
+                        <div className="bank-body">
+                          <h3 className="bank-card-title">{bank.title}</h3>
+                          <div className="bank-meta">
+                            <span>~{Math.floor(bank.questionCount * 67 / 60)} min</span>
+                          </div>
+                          <button className="bank-start" onClick={e => { e.stopPropagation(); promptQuiz(`/quiz/${bank.id}`); }}>
+                            Start <ArrowRight size={12} className="btn-arrow" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ));
+            })()
           )}
         </div>
       </main>
 
+      {showQuizModal && (
+        <div className="modal-overlay" onClick={() => setShowQuizModal(false)}>
+          <div className="modal-box" onClick={e => e.stopPropagation()}>
+            <div className="modal-accent" />
+            <div className="modal-body">
+              <div className="modal-icon modal-icon--brand"><Play size={22} /></div>
+              <h3 className="modal-title">Start Quiz</h3>
+              <p className="modal-desc">You're about to begin. The timer will start once you enter.</p>
+              <div className="modal-actions">
+                <button className="btn-nav" onClick={() => setShowQuizModal(false)}>Cancel</button>
+                <button className="btn-submit" onClick={confirmQuiz}>Begin</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {showLogoutModal && (
         <div className="modal-overlay" onClick={() => setShowLogoutModal(false)}>
-          <div className="modal-box glass" onClick={e => e.stopPropagation()}>
-            <h3 className="modal-title">Sign out?</h3>
-            <p className="modal-desc">You'll need to sign in again to access your quizzes and stats.</p>
-            <div className="modal-actions">
-              <button className="btn-nav" onClick={() => setShowLogoutModal(false)}>Cancel</button>
-              <button className="btn-submit" onClick={confirmLogout}>Sign Out</button>
+          <div className="modal-box" onClick={e => e.stopPropagation()}>
+            <div className="modal-accent modal-accent--danger" />
+            <div className="modal-body">
+              <div className="modal-icon modal-icon--danger"><LogOut size={22} /></div>
+              <h3 className="modal-title">Sign out?</h3>
+              <p className="modal-desc">You'll need to sign in again to access your quizzes and stats.</p>
+              <div className="modal-actions">
+                <button className="btn-nav" onClick={() => setShowLogoutModal(false)}>Cancel</button>
+                <button className="btn-submit" onClick={confirmLogout}>Sign Out</button>
+              </div>
             </div>
           </div>
         </div>

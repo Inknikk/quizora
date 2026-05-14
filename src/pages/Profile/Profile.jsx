@@ -150,12 +150,16 @@ export default function Profile() {
 
       {showLogoutModal && (
         <div className="modal-overlay" onClick={() => setShowLogoutModal(false)}>
-          <div className="modal-box glass" onClick={e => e.stopPropagation()}>
-            <h3 className="modal-title">Sign out?</h3>
-            <p className="modal-desc">You'll need to sign in again to access your quizzes and stats.</p>
-            <div className="modal-actions">
-              <button className="btn-nav" onClick={() => setShowLogoutModal(false)}>Cancel</button>
-              <button className="btn-submit" onClick={confirmLogout}>Sign Out</button>
+          <div className="modal-box" onClick={e => e.stopPropagation()}>
+            <div className="modal-accent modal-accent--danger" />
+            <div className="modal-body">
+              <div className="modal-icon modal-icon--danger"><LogOut size={22} /></div>
+              <h3 className="modal-title">Sign out?</h3>
+              <p className="modal-desc">You'll need to sign in again to access your quizzes and stats.</p>
+              <div className="modal-actions">
+                <button className="btn-nav" onClick={() => setShowLogoutModal(false)}>Cancel</button>
+                <button className="btn-submit" onClick={confirmLogout}>Sign Out</button>
+              </div>
             </div>
           </div>
         </div>
