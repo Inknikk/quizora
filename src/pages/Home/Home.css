@@ -281,4 +281,6 @@
   .section-block-header { flex-direction: column; align-items: flex-start; }
   .welcome-section { max-width: none; }
   .home-main { max-width: none; }
+  .stat-card { padding: 1.25rem 1rem; }
+  .stat-value { font-size: 1.5rem; }
 }
