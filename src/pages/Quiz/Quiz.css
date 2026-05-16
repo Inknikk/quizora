@@ -1,4 +1,4 @@
-.quiz-page { min-height: 100vh; position: relative; }
+.quiz-page { height:100vh; display:flex; flex-direction:column; overflow:hidden; }
 .quiz-bg {
   position: fixed; inset: 0; z-index: 0;
   background: radial-gradient(ellipse at 30% 20%, var(--glow-1) 0%, transparent 50%), var(--bg);
@@ -8,11 +8,16 @@
 .spinner { width:40px; height:40px; border:3px solid var(--border); border-top-color:var(--accent); border-radius:50%; animation:spin 0.8s linear infinite; }
 @keyframes spin { to { transform:rotate(360deg); } }
 
+.quiz-main {
+  flex:1; display:flex; flex-direction:column; justify-content:center;
+  overflow-y:auto; position:relative; z-index:1;
+}
+
 .quiz-container {
-  position:relative; z-index:1;
-  max-width:var(--content-narrow);
+  max-width:860px;
   margin:0 auto;
-  padding:0 var(--pad-main) var(--space-xl);
+  padding:0 var(--pad-main);
+  width:100%;
 }
 
 .quiz-topbar {
@@ -23,8 +28,8 @@
   border-top:none; margin-bottom:0;
 }
 
-.quiz-info { display:flex; flex-direction:column; align-items:center; flex:1; }
-.quiz-title-sm { font-size:0.78rem; color:var(--text-muted); }
+.quiz-info { display:flex; flex-direction:column; align-items:center; flex:1; min-width:0; }
+.quiz-title-sm { font-size:0.78rem; color:var(--text-muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; }
 .q-counter { font-weight:700; color:var(--text); font-size:1rem; }
 
 .quiz-right-bar { display:flex; align-items:center; gap:0.5rem; }
@@ -57,21 +62,21 @@
 
 .flagged { background:var(--accent-bg) !important; color:var(--badge-accent) !important; }
 
-.progress-bar-track { height:5px; background:var(--surface2); margin-bottom:var(--space-lg); border-radius:999px; overflow:hidden; }
+.progress-bar-track { height:5px; background:var(--surface2); margin-bottom:var(--space-md); border-radius:999px; overflow:hidden; }
 .progress-bar-fill { height:100%; background:linear-gradient(90deg, var(--accent), var(--accent2)); transition:width 0.4s ease; border-radius:999px; }
 
-.quiz-card { border-radius:var(--radius-lg); padding:2.5rem; margin-bottom:1.75rem; }
+.quiz-card { border-radius:var(--radius-lg); padding:1.75rem; margin-bottom:1.25rem; }
 
 .q-number { font-size:0.75rem; color:var(--q-num-color); font-weight:600; text-transform:uppercase; letter-spacing:1px; margin-bottom:0.5rem; }
 .multi-hint { display:inline-block; padding:0.3rem 0.75rem; border-radius:999px; background:var(--warning-bg); color:var(--warning); font-size:0.78rem; font-weight:600; margin-bottom:0.85rem; }
 
-.q-text { font-size:1.15rem; color:var(--text); line-height:1.75; margin:0 0 var(--space-md); font-weight:500; }
+.q-text { font-size:1.15rem; color:var(--text); line-height:1.6; margin:0 0 var(--space-sm); font-weight:500; }
 
-.options-list { display:flex; flex-direction:column; gap:0.9rem; }
+.options-list { display:flex; flex-direction:column; gap:0.75rem; }
 
 .option-btn {
-  display:flex; align-items:center; gap:0.85rem;
-  padding:1rem 1.25rem; border-radius:var(--radius-sm); border:2px solid var(--border);
+  display:flex; align-items:center; gap:0.75rem;
+  padding:0.85rem 1rem; border-radius:var(--radius-sm); border:2px solid var(--border);
   background:var(--surface); color:var(--opt-color);
   text-align:left; cursor:pointer; transition:all 0.18s;
   font-size:0.95rem; width:100%;
@@ -108,20 +113,20 @@
 }
 .btn-check:hover { opacity:0.85; transform:translateY(-1px); }
 
-.quiz-nav { display:flex; align-items:center; justify-content:space-between; gap:1.25rem; padding-top:0.5rem; }
+.quiz-nav { display:flex; align-items:center; justify-content:space-between; gap:1rem; padding-top:0.25rem; }
 
 .btn-nav {
   display:flex; align-items:center; gap:0.4rem;
-  padding:0.75rem 1.25rem; border-radius:var(--radius-sm); border:1px solid var(--border-light);
-  background:var(--surface2); color:var(--text); cursor:pointer; font-size:0.88rem; transition:all 0.2s;
+  padding:0.65rem 1.1rem; border-radius:var(--radius-sm); border:1px solid var(--border-light);
+  background:var(--surface2); color:var(--text); cursor:pointer; font-size:0.85rem; transition:all 0.2s;
 }
 .btn-nav:hover:not(:disabled) { background:var(--hover-surface); border-color:var(--accent); }
 .btn-nav:disabled { opacity:0.3; cursor:not-allowed; }
 
 .btn-submit {
-  padding:0.75rem 1.5rem; border-radius:var(--radius-sm); border:none;
+  padding:0.65rem 1.25rem; border-radius:var(--radius-sm); border:none;
   background:linear-gradient(135deg, var(--accent), var(--accent2));
-  color:var(--text-on-accent); font-weight:700; font-size:0.95rem; cursor:pointer; transition:opacity 0.2s, transform 0.15s;
+  color:var(--text-on-accent); font-weight:700; font-size:0.9rem; cursor:pointer; transition:opacity 0.2s, transform 0.15s;
 }
 .btn-submit:hover:not(:disabled) { opacity:0.85; transform:translateY(-1px); }
 
@@ -132,6 +137,7 @@
 .dot.active { background:var(--accent); transform:scale(1.35); }
 .dot.answered { background:var(--dot-answered); }
 .dot.dot-done { background:var(--success); }
+.dot.dot-incorrect { background:var(--text-muted); opacity:0.5; }
 .dot.dot-flagged { background:var(--warning); }
 
 /* ── modals ── */
@@ -175,4 +181,32 @@
 @keyframes modalBoxIn {
   from { opacity:0; transform:scale(0.85) translateY(20px); }
   to { opacity:1; transform:scale(1) translateY(0); }
+}
+
+@media (max-width:640px) {
+  .quiz-topbar {
+    padding:0.5rem 1rem;
+    gap:0.5rem;
+  }
+  .quiz-title-sm { font-size:0.7rem; }
+  .q-counter { font-size:0.85rem; }
+  .quiz-right-bar { gap:0.35rem; }
+  .quiz-info { gap:0; }
+
+  .quiz-nav { gap:0.35rem; padding-top:0; }
+  .btn-nav { padding:0.4rem 0.55rem; font-size:0.75rem; }
+  .btn-submit { padding:0.4rem 0.75rem; font-size:0.78rem; }
+  .quiz-card { padding:0.75rem; margin-bottom:0.5rem; }
+  .q-text { font-size:0.85rem; margin-bottom:0.35rem; line-height:1.45; }
+  .option-btn { padding:0.5rem 0.6rem; font-size:0.8rem; gap:0.4rem; }
+  .options-list { gap:0.35rem; }
+  .progress-bar-track { margin-bottom:0.5rem; }
+  .q-number { font-size:0.65rem; margin-bottom:0.2rem; }
+  .multi-hint { font-size:0.7rem; padding:0.15rem 0.45rem; margin-bottom:0.35rem; }
+  .dot-nav { gap:4px; max-width:180px; }
+  .dot { width:7px; height:7px; }
+  .btn-check { margin-top:0.35rem; padding:0.45rem; font-size:0.78rem; }
+  .quiz-topbar { padding:0.25rem 0.65rem; gap:0.25rem; }
+  .timer { font-size:0.65rem; padding:0.1rem 0.35rem; }
+  .streak-badge { font-size:0.65rem; padding:0.1rem 0.35rem; }
 }

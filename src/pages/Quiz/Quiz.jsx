@@ -190,34 +190,35 @@ export default function Quiz() {
   return (
     <div className="quiz-page">
       <div className="quiz-bg"/>
-      <div className="quiz-container">
-        <div className="quiz-topbar glass">
-          <button className="icon-btn" onClick={() => { if (submitted) navigate('/'); else setShowExitModal(true); }}><ChevronLeft size={20}/></button>
-          <div className="quiz-info">
-            <span className="quiz-title-sm">
-              {bank ? bank.title + (isRapid ? ' · Rapid' : '') : 'Rapid Quiz'}
-            </span>
-            <span className="q-counter">{current + 1} / {questions.length}</span>
-          </div>
-          <div className="quiz-right-bar">
-            {isRapid && <ZapOff size={16} className="rapid-icon" style={{color:'var(--warning)'}}/>}
-            {streak >= 1 && (
-              <div className="streak-badge" key={streak}>
-                <Flame size={15} /> {streak}
-              </div>
-            )}
-            {timeLeft !== null && (
-              <div className={`timer ${timeLeft < 60 ? 'timer-warn' : ''}`}>
-                <Clock size={14}/> {mins}:{secs}
-              </div>
-            )}
-            <button className={`icon-btn ${flagged.has(current) ? 'flagged' : ''}`} onClick={toggleFlag}>
-              <Flag size={18}/>
-            </button>
-          </div>
+      <div className="quiz-topbar glass">
+        <button className="icon-btn" onClick={() => { if (submitted) navigate('/'); else setShowExitModal(true); }}><ChevronLeft size={20}/></button>
+        <div className="quiz-info">
+          <span className="quiz-title-sm">
+            {bank ? bank.title + (isRapid ? ' · Rapid' : '') : 'Rapid Quiz'}
+          </span>
+          <span className="q-counter">{current + 1} / {questions.length}</span>
         </div>
+        <div className="quiz-right-bar">
+          {isRapid && <ZapOff size={16} className="rapid-icon" style={{color:'var(--warning)'}}/>}
+          {streak >= 1 && (
+            <div className="streak-badge" key={streak}>
+              <Flame size={15} /> {streak}
+            </div>
+          )}
+          {timeLeft !== null && (
+            <div className={`timer ${timeLeft < 60 ? 'timer-warn' : ''}`}>
+              <Clock size={14}/> {mins}:{secs}
+            </div>
+          )}
+          <button className={`icon-btn ${flagged.has(current) ? 'flagged' : ''}`} onClick={toggleFlag}>
+            <Flag size={18}/>
+          </button>
+        </div>
+      </div>
 
-        <div className="progress-bar-track">
+      <div className="quiz-main">
+        <div className="quiz-container">
+          <div className="progress-bar-track">
           <div className="progress-bar-fill" style={{ width: `${progress}%` }}/>
         </div>
 
@@ -261,7 +262,7 @@ export default function Quiz() {
           </button>
           <div className="dot-nav">
             {questions.map((_, i) => (
-              <button key={i} className={`dot ${i === current ? 'active' : ''} ${questionStatus[i]?.answered ? 'dot-done' : ''} ${selected[i] && !questionStatus[i]?.answered ? 'answered' : ''} ${flagged.has(i) ? 'dot-flagged' : ''}`}
+              <button key={i} className={`dot ${i === current ? 'active' : ''} ${questionStatus[i]?.answered && questionStatus[i]?.correct ? 'dot-done' : ''} ${questionStatus[i]?.answered && !questionStatus[i]?.correct ? 'dot-incorrect' : ''} ${selected[i] && !questionStatus[i]?.answered ? 'answered' : ''} ${flagged.has(i) ? 'dot-flagged' : ''}`}
                 onClick={() => setCurrent(i)}/>
             ))}
           </div>
@@ -290,7 +291,8 @@ export default function Quiz() {
             </div>
           </div>
         )}
+        </div>
       </div>
-    </div>
+      </div>
   );
 }
