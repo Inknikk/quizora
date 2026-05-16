@@ -177,7 +177,20 @@
 .score-red { color:var(--danger); }
 
 @media(max-width:640px) {
-  .profile-stats { grid-template-columns:repeat(3,1fr); gap:0.65rem; }
+  .profile-stats { grid-template-columns:repeat(3,1fr); gap:0.45rem; margin-bottom:1.5rem; }
+  .pstat { padding:0.85rem 0.35rem; gap:0.15rem; }
+  .ps-val { font-size:1.15rem; }
+  .ps-lbl { font-size:0.58rem; letter-spacing:0.3px; word-break:break-word; text-align:center; }
+  .ps-icon { width:18px; height:18px; }
+  .ps-icon svg { width:18px; height:18px; }
   .profile-hero { padding:2rem 1.5rem; }
-  .appearance-themes { grid-template-columns:repeat(2,1fr); }
+  .appearance-section { margin-bottom:1.5rem; }
+  .appearance-section h3 { margin-bottom:0.5rem; }
+  .appearance-themes { grid-template-columns:repeat(2,1fr); gap:0.5rem; margin-bottom:0.5rem; }
+  .appearance-corners { gap:0.5rem; }
+  .app-theme { padding:0.6rem 0.5rem 0.5rem; gap:0.25rem; }
+  .app-corner { padding:0.5rem 0.5rem; gap:0.25rem; }
+  .app-label { font-size:0.65rem; }
+  .app-swatch { width:18px; }
+  .app-bar { height:5px; }
 }
