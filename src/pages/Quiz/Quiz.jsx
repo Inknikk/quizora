@@ -102,6 +102,8 @@ export default function Quiz() {
   const q = questions[current];
   const isAnswered = questionStatus[current]?.answered;
   const isMulti = q?.correctAnswers.length > 1;
+  const qLen = q?.question.length + (q?.options.reduce((s, o) => s + o.length, 0) || 0);
+  const isCompact = qLen > 450;
 
   function getOptionState(opt) {
     if (!isAnswered) return '';
@@ -222,7 +224,7 @@ export default function Quiz() {
           <div className="progress-bar-fill" style={{ width: `${progress}%` }}/>
         </div>
 
-        <div className="quiz-card glass">
+        <div className={`quiz-card glass${isCompact ? ' q-compact' : ''}`}>
           <div className="q-number">Question {current + 1}</div>
           {isMulti && !isAnswered && <div className="multi-hint">Select {q.correctAnswers.length} answers</div>}
           <p className="q-text">{q.question}</p>
