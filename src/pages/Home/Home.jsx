@@ -1,15 +1,25 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { getQuizBanks, getUserAccuracy, getUserLongestStreak } from '../../firebase/firestore';
 import { logoutUser } from '../../firebase/auth';
-import { Play, LogOut, User, Zap, Target, Shuffle, ArrowRight, Flame } from 'lucide-react';
+import { Play, LogOut, User, Zap, Target, RefreshCw, ArrowRight, Flame } from 'lucide-react';
 import './Home.css';
 
 const RAPID_SET_COUNT = 10;
+const STORAGE_KEY = 'quizora_completed_rapid';
 
 function shuffle(arr) {
   return [...arr].sort(() => Math.random() - 0.5);
+}
+
+function loadCompleted() {
+  try { return new Set(JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]')); }
+  catch { return new Set(); }
+}
+
+function saveCompleted(ids) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify([...ids]));
 }
 
 function useCounter(end) {
@@ -45,7 +55,13 @@ export default function Home() {
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [showQuizModal, setShowQuizModal] = useState(false);
   const [quizTarget, setQuizTarget] = useState(null);
+  const [generation, setGeneration] = useState(0);
+  const [completedSetIds, setCompletedSetIds] = useState(loadCompleted);
   const navigate = useNavigate();
+
+  const refreshCompleted = useCallback(() => {
+    setCompletedSetIds(loadCompleted());
+  }, []);
 
   function promptQuiz(path, state) {
     setQuizTarget({ path, state });
@@ -72,16 +88,29 @@ export default function Home() {
     }
   }, [user]);
 
+  useEffect(() => {
+    window.addEventListener('focus', refreshCompleted);
+    return () => window.removeEventListener('focus', refreshCompleted);
+  }, [refreshCompleted]);
+
   const rapidSets = useMemo(() => {
     if (banks.length === 0) return [];
     const allQuestions = banks.flatMap(b => b.questions);
     if (allQuestions.length < 20) return [];
     return Array.from({ length: RAPID_SET_COUNT }, (_, i) => ({
-      id: `rapid-${i}`,
+      id: `rapid-${generation}-${i}`,
       label: `Set ${String(i + 1).padStart(2, '0')}`,
       questions: shuffle(allQuestions).slice(0, 20),
     }));
-  }, [banks]);
+  }, [banks, generation]);
+
+  const visibleSets = rapidSets.filter(set => !completedSetIds.has(set.id));
+
+  function handleGenerate() {
+    saveCompleted([]);
+    setCompletedSetIds(new Set());
+    setGeneration(g => g + 1);
+  }
 
   function handleLogoutClick() { setShowLogoutModal(true); }
 
@@ -147,25 +176,22 @@ export default function Home() {
             <div className="section-block-header">
               <div>
                 <h2 className="section-block-title">Quick Play</h2>
-                <p className="section-block-sub">20 random questions from all topics · ~{Math.floor(20 * 22 / 60)} min · growing pool</p>
+                <p className="section-block-sub">20 random questions from all topics · ~{Math.floor(20 * 22 / 60)} min</p>
               </div>
-              <button className="shuffle-btn" onClick={() => {
-                const idx = Math.floor(Math.random() * rapidSets.length);
-                promptQuiz('/quiz/rapid', { rapidQuestions: rapidSets[idx].questions });
-              }}>
-                <Shuffle size={14} />
-                Shuffle
+              <button className="shuffle-btn" onClick={handleGenerate}>
+                <RefreshCw size={14} />
+                Generate
               </button>
             </div>
             <div className="rapid-grid">
-              {rapidSets.map(set => (
-                <div key={set.id} className="rapid-card" onClick={() => promptQuiz('/quiz/rapid', { rapidQuestions: set.questions })}>
+              {visibleSets.map(set => (
+                <div key={set.id} className="rapid-card" onClick={() => promptQuiz('/quiz/rapid', { rapidQuestions: set.questions, setId: set.id })}>
                   <span className="rapid-card-icon"><Zap size={16} /></span>
                   <div className="rapid-card-body">
                     <div className="rapid-num">{set.label}</div>
                     <div className="rapid-meta">{set.questions.length} questions</div>
                   </div>
-                  <button className="rapid-play" onClick={e => { e.stopPropagation(); promptQuiz('/quiz/rapid', { rapidQuestions: set.questions }); }}>
+                  <button className="rapid-play" onClick={e => { e.stopPropagation(); promptQuiz('/quiz/rapid', { rapidQuestions: set.questions, setId: set.id }); }}>
                     Play <ArrowRight size={12} className="btn-arrow" />
                   </button>
                 </div>

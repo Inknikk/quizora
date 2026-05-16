@@ -179,6 +179,14 @@ export default function Quiz() {
         if (newStreak > 0) setProfile(prev => ({ ...prev, longestStreak: newStreak }));
       } catch { /* silent */ }
     }
+    const setId = location.state?.setId;
+    if (setId) {
+      try {
+        const stored = JSON.parse(localStorage.getItem('quizora_completed_rapid') || '[]');
+        stored.push(setId);
+        localStorage.setItem('quizora_completed_rapid', JSON.stringify(stored));
+      } catch { /* silent */ }
+    }
     navigate('/results', { state: { correct, total: questions.length, answers, bankTitle: bank?.title || 'Rapid Quiz' } });
   }
 
