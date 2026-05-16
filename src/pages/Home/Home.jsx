@@ -143,7 +143,7 @@ export default function Home() {
         )}
 
         {!loading && rapidSets.length > 0 && (
-          <div className="section-block section-block--wide" style={{ animationDelay: '360ms' }}>
+          <div className="section-block quickplay-section" style={{ animationDelay: '360ms' }}>
             <div className="section-block-header">
               <div>
                 <h2 className="section-block-title">Quick Play</h2>
@@ -160,13 +160,13 @@ export default function Home() {
             <div className="rapid-grid">
               {rapidSets.map(set => (
                 <div key={set.id} className="rapid-card" onClick={() => promptQuiz('/quiz/rapid', { rapidQuestions: set.questions })}>
-                  <span className="rapid-num">{set.label}</span>
-                  <div className="rapid-meta">
-                    <span>{set.questions.length} questions</span>
-                    <span>~{Math.floor(set.questions.length * 22 / 60)} min</span>
+                  <span className="rapid-card-icon"><Zap size={16} /></span>
+                  <div className="rapid-card-body">
+                    <div className="rapid-num">{set.label}</div>
+                    <div className="rapid-meta">{set.questions.length} questions</div>
                   </div>
                   <button className="rapid-play" onClick={e => { e.stopPropagation(); promptQuiz('/quiz/rapid', { rapidQuestions: set.questions }); }}>
-                    Play <ArrowRight size={14} className="btn-arrow" />
+                    Play <ArrowRight size={12} className="btn-arrow" />
                   </button>
                 </div>
               ))}

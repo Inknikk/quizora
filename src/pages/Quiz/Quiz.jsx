@@ -165,6 +165,7 @@ export default function Quiz() {
     });
     const answers = questions.map((q, i) => ({
       question: q.question,
+      options: q.options,
       selected: selected[i] || [],
       correct: q.correctAnswers,
       isCorrect: q.correctAnswers.length === (selected[i]||[]).length &&
