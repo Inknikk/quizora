@@ -22,6 +22,7 @@ function ReviewCard({ answer, onDismiss }) {
   const isCorrectAnim = tapResult === 'correct';
   const isWrongAnim = tapResult === 'wrong';
   const isSwiping = dragging || Math.abs(offsetX) > 10;
+  const options = answer.options || [];
 
   const handleStart = useCallback((clientX) => {
     if (isCorrectAnim) return;
@@ -99,12 +100,12 @@ function ReviewCard({ answer, onDismiss }) {
         <div className="q-number">Review</div>
         <p className="q-text">{answer.question}</p>
         <div className="options-list">
-          {answer.options.map((opt, i) => {
+          {options.map((opt, i) => {
             const letter = String.fromCharCode(65 + i);
             const wasSelected = answer.selected.includes(opt);
             const isCorrectOpt = answer.correct.includes(opt);
             const isTapped = tapResult && opt === (answer.correct.includes(opt)
-              ? answer.correct.find(c => answer.options.includes(c))
+              ? answer.correct.find(c => options.includes(c))
               : opt);
             let optClass = 'option-btn';
             if (!tapResult) {
@@ -121,7 +122,7 @@ function ReviewCard({ answer, onDismiss }) {
                 <span className="opt-letter">{letter}</span>
                 <span className="opt-text">{opt}</span>
                 {tapResult === 'correct' && isCorrectOpt && <CheckCircle size={18} className="opt-ic-correct"/>}
-                {tapResult === 'wrong' && opt === (answer.correct.includes(opt) ? answer.correct.find(c => answer.options.includes(c)) : opt) && <span className="opt-x">✕</span>}
+                {tapResult === 'wrong' && opt === (answer.correct.includes(opt) ? answer.correct.find(c => options.includes(c)) : opt) && <span className="opt-x">✕</span>}
               </button>
             );
           })}
@@ -170,7 +171,7 @@ export default function Profile() {
   for (const r of results) {
     const ans = r.answers || [];
     for (const a of ans) {
-      if (!a.isCorrect && a.options && !seen.has(a.question)) {
+      if (!a.isCorrect && !seen.has(a.question)) {
         seen.add(a.question);
         reviewCards.push(a);
       }
