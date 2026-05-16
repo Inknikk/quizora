@@ -3,7 +3,7 @@ import { useParams, useSearchParams, useNavigate, useLocation } from 'react-rout
 import { useAuth } from '../../context/AuthContext';
 import { getQuizBank, saveResult } from '../../firebase/firestore';
 import { updateUserStats } from '../../firebase/auth';
-import { ChevronLeft, ChevronRight, Flag, Clock, CheckCircle, ZapOff, Flame, LogOut } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Flag, Clock, CheckCircle, ZapOff, Flame, LogOut, Loader } from 'lucide-react';
 import toast from 'react-hot-toast';
 import './Quiz.css';
 
@@ -23,6 +23,7 @@ export default function Quiz() {
   const { user, setProfile } = useAuth();
   const navigate = useNavigate();
   const submittingRef = useRef(false);
+  const [submitting, setSubmitting] = useState(false);
   const [bank, setBank] = useState(null);
   const [questions, setQuestions] = useState([]);
   const [current, setCurrent] = useState(0);
@@ -104,6 +105,7 @@ export default function Quiz() {
   const isMulti = q?.correctAnswers.length > 1;
   const qLen = q?.question.length + (q?.options.reduce((s, o) => s + o.length, 0) || 0);
   const isCompact = qLen > 450;
+  const fontScale = Math.min(1.3, Math.max(0.75, 1.0 - (qLen - 250) * 0.001));
 
   function getOptionState(opt) {
     if (!isAnswered) return '';
@@ -155,6 +157,7 @@ export default function Quiz() {
   async function handleSubmit() {
     if (submittingRef.current || submitted) return;
     submittingRef.current = true;
+    setSubmitting(true);
     setSubmitted(true);
     let correct = 0;
     questions.forEach((q, i) => {
@@ -233,7 +236,7 @@ export default function Quiz() {
           <div className="progress-bar-fill" style={{ width: `${progress}%` }}/>
         </div>
 
-        <div className={`quiz-card glass${isCompact ? ' q-compact' : ''}`}>
+        <div className={`quiz-card glass${isCompact ? ' q-compact' : ''}`} style={{ '--q-scale': fontScale }}>
           <div className="q-number">Question {current + 1}</div>
           {isMulti && !isAnswered && <div className="multi-hint">Select {q.correctAnswers.length} answers</div>}
           <p className="q-text">{q.question}</p>
@@ -282,7 +285,9 @@ export default function Quiz() {
               Next <ChevronRight size={18}/>
             </button>
           ) : (
-            <button className="btn-submit" onClick={handleSubmit} disabled={submitted}>Submit Quiz</button>
+            <button className="btn-submit" onClick={handleSubmit} disabled={submitted || submitting}>
+              {submitting ? <><Loader size={16} className="submit-spinner"/> Submitting…</> : 'Submit Quiz'}
+            </button>
           )}
         </div>
 

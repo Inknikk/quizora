@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { getUserResults, getUserAccuracy, getUserLongestStreak } from '../../firebase/firestore';
 import { logoutUser, updateUserDisplayName } from '../../firebase/auth';
-import { ChevronLeft, LogOut, Flame, Target, Zap, Pencil, CheckCircle } from 'lucide-react';
+import { ChevronLeft, LogOut, Flame, Target, Zap, Pencil, CheckCircle, Eye, EyeOff } from 'lucide-react';
 import './Profile.css';
 
 const THEMES = [
@@ -13,7 +13,7 @@ const THEMES = [
   { id: 'ember', label: 'Ember', desc: 'Sunset glow · warm and luxurious', colors: ['hsl(22 85% 54%)', 'hsl(18 18% 11%)', 'hsl(18 22% 7%)'] },
 ];
 
-function ReviewCard({ answer, onDismiss }) {
+function RecapCard({ answer, onDismiss, hintsOn }) {
   const [tapResult, setTapResult] = useState(null);
   const [dragging, setDragging] = useState(false);
   const [offsetX, setOffsetX] = useState(0);
@@ -110,7 +110,7 @@ function ReviewCard({ answer, onDismiss }) {
             let optClass = 'option-btn';
             if (!tapResult) {
               if (wasSelected && !isCorrectOpt) optClass += ' incorrect-dim';
-              else if (isCorrectOpt) optClass += ' correct-hint';
+              else if (hintsOn && isCorrectOpt) optClass += ' correct-hint';
             }
             if (isCorrectOpt && tapResult === 'correct') optClass += ' correct';
             if (tapResult === 'wrong' && opt === tapResult) optClass += ' incorrect';
@@ -179,6 +179,7 @@ export default function Profile() {
   }
 
   const [dismissed, setDismissed] = useState(new Set());
+  const [hintsOn, setHintsOn] = useState(true);
 
   function handleDismiss(idx) {
     setDismissed(prev => new Set([...prev, idx]));
@@ -270,16 +271,20 @@ export default function Profile() {
 
         <div className="review-section">
           <h3 className="review-title">
-            Review
+            Recap
             {activeCards.length > 0 && <span className="review-count">{activeCards.length}</span>}
+            <button className="hints-toggle" onClick={() => setHintsOn(h => !h)} title={hintsOn ? 'Hide hints' : 'Show hints'}>
+              {hintsOn ? <Eye size={14} /> : <EyeOff size={14} />}
+            </button>
           </h3>
           {loading ? <div className="p-loading">Loading…</div> : (
             activeCards.length === 0 ? (
-              <p className="empty-hist">No questions to review. Great job!</p>
+              <p className="empty-hist">No questions to recap. Great job!</p>
             ) : (
-              <ReviewCard
+              <RecapCard
                 key={activeCards[0].question}
                 answer={activeCards[0]}
+                hintsOn={hintsOn}
                 onDismiss={() => handleDismiss(reviewCards.indexOf(activeCards[0]))}
               />
             )

@@ -1,7 +1,7 @@
 import { db } from './config';
 import {
   collection, getDocs, addDoc, doc, setDoc,
-  query, where, orderBy, serverTimestamp, getDoc
+  query, where, serverTimestamp, getDoc
 } from 'firebase/firestore';
 
 // --- Quiz Banks ---
@@ -32,11 +32,16 @@ export async function saveResult(uid, bankId, score, total, answers, bestStreak)
 export async function getUserResults(uid) {
   const q = query(
     collection(db, 'results'),
-    where('uid', '==', uid),
-    orderBy('completedAt', 'desc')
+    where('uid', '==', uid)
   );
   const snap = await getDocs(q);
-  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  return snap.docs
+    .map(d => ({ id: d.id, ...d.data() }))
+    .sort((a, b) => {
+      const ta = a.completedAt?.toMillis?.() || 0;
+      const tb = b.completedAt?.toMillis?.() || 0;
+      return tb - ta;
+    });
 }
 
 // --- Seed AWS questions (run once) ---
@@ -65,12 +70,16 @@ export async function getUserAccuracy(uid) {
 
 export async function getUserLongestStreak(uid) {
   const ref = collection(db, 'results');
-  const q = query(ref, where('uid', '==', uid), orderBy('completedAt', 'asc'));
+  const q = query(ref, where('uid', '==', uid));
   const snap = await getDocs(q);
+  const docs = snap.docs.map(d => d.data()).sort((a, b) => {
+    const ta = a.completedAt?.toMillis?.() || 0;
+    const tb = b.completedAt?.toMillis?.() || 0;
+    return ta - tb;
+  });
   let streak = 0;
   let longest = 0;
-  for (const d of snap.docs) {
-    const data = d.data();
+  for (const data of docs) {
     if ((data.bestStreak || 0) > longest) longest = data.bestStreak;
     const answers = data.answers || [];
     for (const a of answers) {

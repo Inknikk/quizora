@@ -8,7 +8,8 @@ export default function Results() {
 
   if (!state) { navigate('/'); return null; }
 
-  const { correct, total, answers, bankTitle } = state;
+  const { correct, total, answers: rawAnswers, bankTitle } = state;
+  const answers = [...rawAnswers].sort((a, b) => (a.isCorrect === b.isCorrect ? 0 : a.isCorrect ? 1 : -1));
   const pct = Math.round((correct / total) * 100);
   const grade = pct >= 85 ? 'Excellent!' : pct >= 70 ? 'Good Job!' : pct >= 50 ? 'Keep Practicing' : 'Keep Going!';
   const gradeColor = pct >= 85 ? 'green' : pct >= 70 ? 'blue' : pct >= 50 ? 'yellow' : 'red';
