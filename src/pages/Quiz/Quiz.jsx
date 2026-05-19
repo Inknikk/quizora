@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { useParams, useSearchParams, useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../context/useAuth';
 import { getQuizBank, saveResult } from '../../firebase/firestore';
 import { updateUserStats } from '../../firebase/auth';
 import { ChevronLeft, ChevronRight, Flag, Clock, CheckCircle, ZapOff, Flame, LogOut, Loader } from 'lucide-react';
@@ -72,7 +72,7 @@ export default function Quiz() {
       setTimeLeft(q.length * (isRapid ? RAPID_SECONDS_PER_QUESTION : SECONDS_PER_QUESTION));
       setLoading(false);
     });
-  }, [id, isRapid, location.state]);
+  }, [id, isRapid, location.state, navigate]);
 
   useEffect(() => {
     if (submitted) return;
@@ -93,9 +93,11 @@ export default function Quiz() {
     return () => window.removeEventListener('popstate', onPop);
   }, [submitted]);
 
+  const handleSubmitRef = useRef(null);
+  useEffect(() => { handleSubmitRef.current = handleSubmit; });
   useEffect(() => {
     if (timeLeft === null || submitted) return;
-    if (timeLeft <= 0) { handleSubmit(); return; }
+    if (timeLeft <= 0) { handleSubmitRef.current?.(); return; }
     const t = setTimeout(() => setTimeLeft(t => t - 1), 1000);
     return () => clearTimeout(t);
   }, [timeLeft, submitted]);

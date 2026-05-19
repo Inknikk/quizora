@@ -1,16 +1,22 @@
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
-import { getQuizBanks, getUserAccuracy, getUserLongestStreak } from '../../firebase/firestore';
+import { useAuth } from '../../context/useAuth';
+import { getQuizBanks, getUserAccuracy, getUserLongestStreak, getUserResults } from '../../firebase/firestore';
 import { logoutUser } from '../../firebase/auth';
-import { Play, LogOut, User, Zap, Target, RefreshCw, ArrowRight, Flame } from 'lucide-react';
+import { Play, LogOut, User, Zap, Target, RefreshCw, ArrowRight, Flame, Layers, Eye, EyeOff } from 'lucide-react';
+import RecapCard from './RecapCard';
 import './Home.css';
 
 const RAPID_SET_COUNT = 10;
+const FULL_QUIZ_SIZE = 65;
 const STORAGE_KEY = 'quizora_completed_rapid';
 
 function shuffle(arr) {
   return [...arr].sort(() => Math.random() - 0.5);
+}
+
+function allQuestions(banks) {
+  return banks.flatMap(b => b.questions || []);
 }
 
 function loadCompleted() {
@@ -57,6 +63,9 @@ export default function Home() {
   const [quizTarget, setQuizTarget] = useState(null);
   const [generation, setGeneration] = useState(0);
   const [completedSetIds, setCompletedSetIds] = useState(loadCompleted);
+  const [recapResults, setRecapResults] = useState([]);
+  const [dismissed, setDismissed] = useState(new Set());
+  const [hintsOn, setHintsOn] = useState(true);
   const navigate = useNavigate();
 
   const refreshCompleted = useCallback(() => {
@@ -85,6 +94,7 @@ export default function Home() {
         }
       });
       getUserLongestStreak(user.uid).then(s => setLongestStreak(s ?? 0)).catch(() => setLongestStreak(0));
+      getUserResults(user.uid).then(r => setRecapResults(r)).catch(() => {});
     }
   }, [user]);
 
@@ -95,12 +105,12 @@ export default function Home() {
 
   const rapidSets = useMemo(() => {
     if (banks.length === 0) return [];
-    const allQuestions = banks.flatMap(b => b.questions);
-    if (allQuestions.length < 20) return [];
+    const pool = allQuestions(banks);
+    if (pool.length < 20) return [];
     return Array.from({ length: RAPID_SET_COUNT }, (_, i) => ({
       id: `rapid-${generation}-${i}`,
       label: `Set ${String(i + 1).padStart(2, '0')}`,
-      questions: shuffle(allQuestions).slice(0, 20),
+      questions: shuffle(pool).slice(0, 20),
     }));
   }, [banks, generation]);
 
@@ -110,6 +120,24 @@ export default function Home() {
     saveCompleted([]);
     setCompletedSetIds(new Set());
     setGeneration(g => g + 1);
+  }
+
+  const reviewCards = [];
+  const seen = new Set();
+  for (const r of recapResults) {
+    const ans = r.answers || [];
+    for (const a of ans) {
+      if (!a.isCorrect && !seen.has(a.question)) {
+        seen.add(a.question);
+        reviewCards.push(a);
+      }
+    }
+  }
+
+  const activeCards = reviewCards.filter((_, i) => !dismissed.has(i));
+
+  function handleDismiss(idx) {
+    setDismissed(prev => new Set([...prev, idx]));
   }
 
   function handleLogoutClick() { setShowLogoutModal(true); }
@@ -167,6 +195,35 @@ export default function Home() {
               <div className="stat-icon-wrap"><Flame size={20} /></div>
               <AnimatedStat value={profile?.longestStreak ?? longestStreak} />
               <div className="stat-label">Best Streak</div>
+            </div>
+          </div>
+        )}
+
+        {!loading && banks.length > 0 && allQuestions(banks).length >= FULL_QUIZ_SIZE && (
+          <div className="section-block fullquiz-section" style={{ animationDelay: '240ms' }}>
+            <div className="section-block-header">
+              <div>
+                <h2 className="section-block-title">Full Quiz</h2>
+                <p className="section-block-sub">{FULL_QUIZ_SIZE} random questions from all topics · ~{Math.floor(FULL_QUIZ_SIZE * 67 / 60)} min</p>
+              </div>
+              <button className="shuffle-btn" onClick={() => {
+                promptQuiz('/quiz/rapid', { rapidQuestions: shuffle(allQuestions(banks)).slice(0, FULL_QUIZ_SIZE) });
+              }}>
+                <RefreshCw size={14} />
+                Generate
+              </button>
+            </div>
+            <div className="fullquiz-card" onClick={() => {
+              promptQuiz('/quiz/rapid', { rapidQuestions: shuffle(allQuestions(banks)).slice(0, FULL_QUIZ_SIZE) });
+            }}>
+              <div className="fullquiz-icon"><Layers size={24}/></div>
+              <div className="fullquiz-body">
+                <div className="fullquiz-title">Start Full Quiz</div>
+                <div className="fullquiz-meta">{FULL_QUIZ_SIZE} questions across all topics</div>
+              </div>
+              <button className="fullquiz-start" onClick={e => { e.stopPropagation(); promptQuiz('/quiz/rapid', { rapidQuestions: shuffle(allQuestions(banks)).slice(0, FULL_QUIZ_SIZE) }); }}>
+                Start <ArrowRight size={12} className="btn-arrow" />
+              </button>
             </div>
           </div>
         )}
@@ -255,6 +312,26 @@ export default function Home() {
             })()
           )}
         </div>
+
+        {activeCards.length > 0 && (
+          <div className="section-block recap-section" style={{ animationDelay: '600ms' }}>
+            <div className="section-block-header">
+              <div>
+                <h2 className="section-block-title">Review Mistakes</h2>
+                <p className="section-block-sub">{activeCards.length} question{activeCards.length !== 1 ? 's' : ''} to practice</p>
+              </div>
+              <button className="hints-toggle" onClick={() => setHintsOn(h => !h)} title={hintsOn ? 'Hide hints' : 'Show hints'}>
+                {hintsOn ? <Eye size={14} /> : <EyeOff size={14} />}
+              </button>
+            </div>
+            <RecapCard
+              key={activeCards[0].question}
+              answer={activeCards[0]}
+              hintsOn={hintsOn}
+              onDismiss={() => handleDismiss(reviewCards.indexOf(activeCards[0]))}
+            />
+          </div>
+        )}
       </main>
 
       {showQuizModal && (

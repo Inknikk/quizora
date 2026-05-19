@@ -138,3 +138,11 @@
 .btn-google:hover {
   background: var(--hover-surface);
 }
+
+.auth-forgot {
+  background: none; border: none; color: var(--text-muted); cursor: pointer;
+  font-size: 0.82rem; display: inline-flex; align-items: center; gap: 0.35rem;
+  transition: color 0.2s; padding: 0; width: fit-content; margin: -0.25rem 0 0.25rem;
+}
+.auth-forgot:hover { color: var(--accent); }
+.auth-forgot:disabled { opacity: 0.5; cursor: not-allowed; }

@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
-import { AuthProvider, useAuth } from './context/AuthContext';
+import { AuthProvider } from './context/AuthContext.jsx';
+import { useAuth } from './context/useAuth.js';
 import Auth from './pages/Auth/Auth';
 import Home from './pages/Home/Home';
 import Quiz from './pages/Quiz/Quiz';

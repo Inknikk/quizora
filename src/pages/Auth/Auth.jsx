@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { registerUser, loginUser, loginWithGoogle } from '../../firebase/auth';
+import { registerUser, loginUser, loginWithGoogle, sendPasswordReset } from '../../firebase/auth';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { LogIn, UserPlus, Globe } from 'lucide-react';
+import { LogIn, UserPlus, Globe, Mail } from 'lucide-react';
 import './Auth.css';
 
 export default function Auth() {
@@ -11,6 +11,7 @@ export default function Auth() {
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [loading, setLoading] = useState(false);
+  const [resetting, setResetting] = useState(false);
   const navigate = useNavigate();
 
   async function handleSubmit(e) {
@@ -42,6 +43,22 @@ export default function Auth() {
     }
   }
 
+  async function handleResetPassword() {
+    if (!email) {
+      toast.error('Enter your email address first');
+      return;
+    }
+    setResetting(true);
+    try {
+      await sendPasswordReset(email);
+      toast.success('Password reset email sent!');
+    } catch (err) {
+      toast.error(err.message.replace('Firebase: ', ''));
+    } finally {
+      setResetting(false);
+    }
+  }
+
   return (
     <div className="auth-page">
       <div className="auth-bg" />
@@ -65,6 +82,11 @@ export default function Auth() {
             onChange={e => setEmail(e.target.value)} required />
           <input className="auth-input" type="password" placeholder="Password" value={password}
             onChange={e => setPassword(e.target.value)} required />
+          {mode === 'login' && (
+            <button type="button" className="auth-forgot" onClick={handleResetPassword} disabled={resetting}>
+              <Mail size={14}/> {resetting ? 'Sending…' : 'Forgot password?'}
+            </button>
+          )}
           <button className="btn-primary" type="submit" disabled={loading}>
             {loading ? 'Please wait…' : mode === 'login' ? <><LogIn size={16}/> Sign In</> : <><UserPlus size={16}/> Create Account</>}
           </button>

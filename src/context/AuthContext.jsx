@@ -1,9 +1,8 @@
-import { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from '../firebase/config';
 import { getUserProfile, updateUserTheme, updateUserCorners } from '../firebase/auth';
-
-const AuthContext = createContext(null);
+import { AuthContext } from './authContext';
 
 function normalizeTheme(t) {
   if (t === 'dark') return 'midnight';
@@ -73,5 +72,3 @@ export function AuthProvider({ children }) {
     </AuthContext.Provider>
   );
 }
-
-export const useAuth = () => useContext(AuthContext);
