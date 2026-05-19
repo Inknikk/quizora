@@ -41,9 +41,22 @@ export default function Quiz() {
   const isRapid = searchParams.get('rapid') === '1';
 
   useEffect(() => {
+    const blunderQs = location.state?.blunderQuestions;
+    if (blunderQs && blunderQs.length > 0) {
+      try {
+        const q = blunderQs.map(q => ({
+          ...q,
+          options: shuffle(q.options),
+        }));
+        setQuestions(q);
+        setTimeLeft(q.length * RAPID_SECONDS_PER_QUESTION);
+      } catch { /* silent */ }
+      setLoading(false);
+      return;
+    }
     const rapidQs = location.state?.rapidQuestions;
     if (rapidQs) {
-      queueMicrotask(() => {
+      try {
         const q = rapidQs.map(q => {
           const opts = shuffle(q.options);
           if (q.correctAnswers.length > 1 && opts.length === 4 && !opts.includes(NONE_OPTION)) {
@@ -53,8 +66,8 @@ export default function Quiz() {
         });
         setQuestions(q);
         setTimeLeft(q.length * RAPID_SECONDS_PER_QUESTION);
-        setLoading(false);
-      });
+      } catch { /* silent */ }
+      setLoading(false);
       return;
     }
     getQuizBank(id).then(b => {
@@ -209,7 +222,7 @@ export default function Quiz() {
         localStorage.setItem('quizora_completed_rapid', JSON.stringify(stored));
       } catch { /* silent */ }
     }
-    navigate('/results', { state: { correct, total: questions.length, answers, bankTitle: bank?.title || 'Rapid Quiz' } });
+    navigate('/results', { state: { correct, total: questions.length, answers, bankTitle: bank?.title || (id === 'blunder' ? 'Blunder Quiz' : 'Rapid Quiz') } });
   }
 
   if (loading) return <div className="quiz-loading"><div className="spinner"/></div>;
@@ -227,7 +240,7 @@ export default function Quiz() {
         <button className="icon-btn" onClick={() => { if (submitted) navigate('/'); else setShowExitModal(true); }}><ChevronLeft size={20}/></button>
         <div className="quiz-info">
           <span className="quiz-title-sm">
-            {bank ? bank.title + (isRapid ? ' · Rapid' : '') : 'Rapid Quiz'}
+            {bank ? bank.title + (isRapid ? ' · Rapid' : '') : id === 'blunder' ? 'Blunder Quiz' : 'Rapid Quiz'}
           </span>
           <span className="q-counter">{current + 1} / {questions.length}</span>
         </div>

@@ -185,12 +185,12 @@
   .quiz-title-sm { font-size:0.7rem; }
   .q-counter { font-size:0.85rem; }
   .quiz-right-bar { gap:0.35rem; }
-  .quiz-info { gap:0; }
+  .quiz-info { gap:0.5rem; }
 
-  .quiz-container { min-height:55vh; gap:0.35rem; justify-content:center; }
-  .quiz-nav { gap:0.25rem; padding-top:0; }
-  .quiz-nav .btn-nav { padding:0.35rem 0.5rem; font-size:0.72rem; gap:0.25rem; }
-  .quiz-nav .btn-submit { padding:0.35rem 0.65rem; font-size:0.75rem; }
+  .quiz-container { min-height:55vh; gap:1rem; justify-content:center; }
+  .quiz-nav { gap:0.35rem; padding-top:0; }
+  .quiz-nav .btn-nav { padding:0.5rem 0.75rem; font-size:0.82rem; gap:0.35rem; }
+  .quiz-nav .btn-submit { padding:0.5rem 0.85rem; font-size:0.85rem; }
   .q-compact .q-text { font-size:1.02rem; }
   .q-compact .option-btn { padding:0.6rem 0.72rem; font-size:0.94rem; gap:0.55rem; }
   .q-compact .options-list { gap:0.45rem; }

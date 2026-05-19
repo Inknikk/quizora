@@ -16,11 +16,11 @@ function shuffle(arr) {
 }
 
 function toQuizQuestions(items) {
-  return items.map(q => ({
+  return items.filter(q => q.question).map(q => ({
     question: q.question,
-    options: q.options,
-    correctAnswers: q.correctAnswers || q.correct,
-  }));
+    options: Array.isArray(q.options) ? [...q.options] : [],
+    correctAnswers: q.correctAnswers || q.correct || [],
+  })).filter(q => q.options.length > 0 && q.correctAnswers.length > 0);
 }
 
 function allQuestions(banks) {
@@ -145,11 +145,12 @@ export default function Home() {
   }
 
   const blunderSource = blunders.length > 0 ? blunders : reviewCards;
+  const usableBlunders = useMemo(() => toQuizQuestions(blunderSource), [blunderSource]);
   const activeCards = reviewCards.filter((_, i) => !dismissed.has(i));
 
   useEffect(() => {
     if (user && reviewCards.length > 0 && blunders.length === 0) {
-      saveBlunders(user.uid, reviewCards);
+      saveBlunders(user.uid, reviewCards).then(() => setBlunders(reviewCards));
     }
   }, [user, reviewCards.length, blunders.length]);
 
@@ -245,23 +246,23 @@ export default function Home() {
           </div>
         )}
 
-        {blunderSource.length > 0 && (
+        {usableBlunders.length > 0 && (
           <div className="section-block blunderquiz-section" style={{ animationDelay: '300ms' }}>
             <div className="section-block-header">
               <div>
                 <h2 className="section-block-title">Blunder Quiz</h2>
-                <p className="section-block-sub">{blunderSource.length} previously missed questions · ~{Math.floor(Math.min(blunderSource.length, FULL_QUIZ_SIZE) * 67 / 60)} min</p>
+                <p className="section-block-sub">{usableBlunders.length} previously missed questions · ~{Math.floor(Math.min(usableBlunders.length, FULL_QUIZ_SIZE) * 67 / 60)} min</p>
               </div>
             </div>
             <div className="blunder-card" onClick={() => {
-              promptQuiz('/quiz/rapid', { rapidQuestions: toQuizQuestions(shuffle(blunderSource).slice(0, Math.min(FULL_QUIZ_SIZE, blunderSource.length))) });
+              promptQuiz('/quiz/blunder', { blunderQuestions: shuffle(usableBlunders).slice(0, FULL_QUIZ_SIZE) });
             }}>
               <div className="blunder-icon"><AlertTriangle size={24}/></div>
               <div className="fullquiz-body">
                 <div className="blunder-title">Retry Blunders</div>
-                <div className="fullquiz-meta">{Math.min(FULL_QUIZ_SIZE, blunderSource.length)} questions you've missed before</div>
+                <div className="fullquiz-meta">{Math.min(FULL_QUIZ_SIZE, usableBlunders.length)} questions you've missed before</div>
               </div>
-              <button className="blunder-start" onClick={e => { e.stopPropagation(); promptQuiz('/quiz/rapid', { rapidQuestions: toQuizQuestions(shuffle(blunderSource).slice(0, Math.min(FULL_QUIZ_SIZE, blunderSource.length))) }); }}>
+              <button className="blunder-start" onClick={e => { e.stopPropagation(); promptQuiz('/quiz/blunder', { blunderQuestions: shuffle(usableBlunders).slice(0, FULL_QUIZ_SIZE) }); }}>
                 Start <ArrowRight size={12} className="btn-arrow" />
               </button>
             </div>
