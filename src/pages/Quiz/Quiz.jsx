@@ -9,7 +9,7 @@ import './Quiz.css';
 
 const NONE_OPTION = 'None of the above';
 const RAPID_COUNT = 20;
-const SECONDS_PER_QUESTION = Math.ceil(Math.round((80 * 60) / 65) * 0.9);
+const SECONDS_PER_QUESTION = 60;
 const RAPID_SECONDS_PER_QUESTION = 22;
 
 function shuffle(arr) {
@@ -37,6 +37,8 @@ export default function Quiz() {
   const bestStreakRef = useRef(0);
   const [showExitModal, setShowExitModal] = useState(false);
   const [showUnansweredModal, setShowUnansweredModal] = useState(false);
+  const [focusedOption, setFocusedOption] = useState(0);
+  const optionsRef = useRef(null);
 
   const isRapid = searchParams.get('rapid') === '1';
 
@@ -49,7 +51,7 @@ export default function Quiz() {
           options: shuffle(q.options),
         }));
         setQuestions(q);
-        setTimeLeft(q.length * RAPID_SECONDS_PER_QUESTION);
+        setTimeLeft(q.length * SECONDS_PER_QUESTION);
       } catch { /* silent */ }
       setLoading(false);
       return;
@@ -122,6 +124,55 @@ export default function Quiz() {
   const qLen = q?.question.length + (q?.options.reduce((s, o) => s + o.length, 0) || 0);
   const isCompact = qLen > 450;
   const fontScale = Math.min(1.15, Math.max(0.85, 1.0 - (qLen - 250) * 0.0006));
+
+  useEffect(() => {
+    setFocusedOption(0);
+    optionsRef.current?.children[0]?.focus();
+  }, [current]);
+
+  useEffect(() => {
+    if (!q || isAnswered) return;
+    optionsRef.current?.children[focusedOption]?.focus();
+  }, [focusedOption, q, isAnswered]);
+
+  useEffect(() => {
+    if (submitted || loading) return;
+    function onKeyDown(e) {
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        const max = (q?.options.length || 1) - 1;
+        setFocusedOption(prev => e.key === 'ArrowDown' ? Math.min(prev + 1, max) : Math.max(prev - 1, 0));
+        return;
+      }
+      if (['INPUT', 'TEXTAREA', 'BUTTON'].includes(e.target.tagName) && e.key !== 'Backspace') return;
+      if ((e.key === 'Backspace' || e.key === 'ArrowLeft') && current > 0) {
+        e.preventDefault();
+        setCurrent(c => c - 1);
+        return;
+      }
+      if (e.key === 'Enter' && !e.ctrlKey && !e.metaKey) {
+        if (isMulti && !isAnswered) {
+          toggleMultiOption(q.options[focusedOption]);
+        } else if (!isMulti && !isAnswered) {
+          handleSingleSelect(q.options[focusedOption]);
+        }
+        return;
+      }
+      if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+        e.preventDefault();
+        if (isMulti && !isAnswered) checkMultiSelect();
+        else if (!isMulti && !isAnswered) handleSingleSelect(q.options[focusedOption]);
+        return;
+      }
+      if (e.key === 'ArrowRight' && current < questions.length - 1) {
+        e.preventDefault();
+        setCurrent(c => c + 1);
+        return;
+      }
+    }
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [current, submitted, loading, focusedOption, q, isMulti, isAnswered, questions.length]);
 
   function getOptionState(opt) {
     if (!isAnswered) return '';
@@ -273,7 +324,7 @@ export default function Quiz() {
           {isMulti && !isAnswered && <div className="multi-hint">Select {q.correctAnswers.length} answers</div>}
           <p className="q-text">{q.question}</p>
 
-          <div className="options-list">
+          <div className="options-list" ref={optionsRef}>
             {q.options.map((opt, i) => {
               const letter = String.fromCharCode(65 + i);
               const optState = getOptionState(opt);
@@ -284,6 +335,7 @@ export default function Quiz() {
                   className={`option-btn ${isSelected && !isAnswered ? 'selected' : ''} ${optState}`}
                   onClick={() => isMulti ? toggleMultiOption(opt) : handleSingleSelect(opt)}
                   disabled={isAnswered && !isMulti}
+                  tabIndex={i === focusedOption ? 0 : -1}
                 >
                   <span className="opt-letter">{letter}</span>
                   <span className="opt-text">{opt}</span>
@@ -296,14 +348,14 @@ export default function Quiz() {
           </div>
 
           {isMulti && !isAnswered && hasSelection && (
-            <button className="btn-check" onClick={checkMultiSelect}>
+            <button className="btn-check" onClick={checkMultiSelect} title="Ctrl + Enter">
               <CheckCircle size={16}/> Check Answers
             </button>
           )}
         </div>
 
         <div className="quiz-nav">
-          <button className="btn-nav" onClick={() => setCurrent(c => c - 1)} disabled={current === 0}>
+          <button className="btn-nav" onClick={() => setCurrent(c => c - 1)} disabled={current === 0} title="Backspace / ←">
             <ChevronLeft size={18}/> Prev
           </button>
           <div className="dot-nav">
@@ -313,7 +365,7 @@ export default function Quiz() {
             ))}
           </div>
           {current < questions.length - 1 ? (
-            <button className="btn-nav" onClick={() => setCurrent(c => c + 1)}>
+            <button className="btn-nav" onClick={() => setCurrent(c => c + 1)} title="→">
               Next <ChevronRight size={18}/>
             </button>
           ) : (
