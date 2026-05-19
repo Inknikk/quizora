@@ -108,3 +108,11 @@ export async function resetUserProgress(uid) {
   });
   await batch.commit();
 }
+
+export async function resetUserBlunders(uid) {
+  await setDoc(doc(db, 'blunders', uid), {
+    uid,
+    questions: [],
+    updatedAt: serverTimestamp(),
+  });
+}

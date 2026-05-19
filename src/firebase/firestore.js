@@ -55,6 +55,27 @@ export async function seedQuizBank(bankData) {
   return ref.id;
 }
 
+// --- Blunders (persist across progress resets) ---
+export async function saveBlunders(uid, questions) {
+  const ref = doc(db, 'blunders', uid);
+  const snap = await getDoc(ref);
+  const existing = snap.exists() ? snap.data().questions || [] : [];
+  const seen = new Set(existing.map(q => q.question));
+  const newOnes = questions.filter(q => !seen.has(q.question));
+  if (newOnes.length === 0) return;
+  await setDoc(ref, {
+    uid,
+    questions: [...existing, ...newOnes],
+    updatedAt: serverTimestamp(),
+  });
+}
+
+export async function getUserBlunders(uid) {
+  const ref = doc(db, 'blunders', uid);
+  const snap = await getDoc(ref);
+  return snap.exists() ? snap.data().questions || [] : [];
+}
+
 export async function getUserAccuracy(uid) {
   const ref = collection(db, 'results');
   const q = query(ref, where('uid', '==', uid));

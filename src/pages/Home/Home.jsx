@@ -1,9 +1,9 @@
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/useAuth';
-import { getQuizBanks, getUserAccuracy, getUserLongestStreak, getUserResults } from '../../firebase/firestore';
+import { getQuizBanks, getUserAccuracy, getUserLongestStreak, getUserResults, getUserBlunders, saveBlunders } from '../../firebase/firestore';
 import { logoutUser } from '../../firebase/auth';
-import { Play, LogOut, User, Zap, Target, RefreshCw, ArrowRight, Flame, Layers, Eye, EyeOff } from 'lucide-react';
+import { Play, LogOut, User, Zap, Target, RefreshCw, ArrowRight, Flame, Layers, Eye, EyeOff, AlertTriangle } from 'lucide-react';
 import RecapCard from './RecapCard';
 import './Home.css';
 
@@ -13,6 +13,14 @@ const STORAGE_KEY = 'quizora_completed_rapid';
 
 function shuffle(arr) {
   return [...arr].sort(() => Math.random() - 0.5);
+}
+
+function toQuizQuestions(items) {
+  return items.map(q => ({
+    question: q.question,
+    options: q.options,
+    correctAnswers: q.correctAnswers || q.correct,
+  }));
 }
 
 function allQuestions(banks) {
@@ -64,8 +72,9 @@ export default function Home() {
   const [generation, setGeneration] = useState(0);
   const [completedSetIds, setCompletedSetIds] = useState(loadCompleted);
   const [recapResults, setRecapResults] = useState([]);
+  const [blunders, setBlunders] = useState([]);
   const [dismissed, setDismissed] = useState(new Set());
-  const [hintsOn, setHintsOn] = useState(true);
+  const [hintsOn, setHintsOn] = useState(false);
   const navigate = useNavigate();
 
   const refreshCompleted = useCallback(() => {
@@ -95,6 +104,7 @@ export default function Home() {
       });
       getUserLongestStreak(user.uid).then(s => setLongestStreak(s ?? 0)).catch(() => setLongestStreak(0));
       getUserResults(user.uid).then(r => setRecapResults(r)).catch(() => {});
+      getUserBlunders(user.uid).then(b => setBlunders(b)).catch(() => {});
     }
   }, [user]);
 
@@ -134,7 +144,14 @@ export default function Home() {
     }
   }
 
+  const blunderSource = blunders.length > 0 ? blunders : reviewCards;
   const activeCards = reviewCards.filter((_, i) => !dismissed.has(i));
+
+  useEffect(() => {
+    if (user && reviewCards.length > 0 && blunders.length === 0) {
+      saveBlunders(user.uid, reviewCards);
+    }
+  }, [user, reviewCards.length, blunders.length]);
 
   function handleDismiss(idx) {
     setDismissed(prev => new Set([...prev, idx]));
@@ -222,6 +239,29 @@ export default function Home() {
                 <div className="fullquiz-meta">{FULL_QUIZ_SIZE} questions across all topics</div>
               </div>
               <button className="fullquiz-start" onClick={e => { e.stopPropagation(); promptQuiz('/quiz/rapid', { rapidQuestions: shuffle(allQuestions(banks)).slice(0, FULL_QUIZ_SIZE) }); }}>
+                Start <ArrowRight size={12} className="btn-arrow" />
+              </button>
+            </div>
+          </div>
+        )}
+
+        {blunderSource.length > 0 && (
+          <div className="section-block blunderquiz-section" style={{ animationDelay: '300ms' }}>
+            <div className="section-block-header">
+              <div>
+                <h2 className="section-block-title">Blunder Quiz</h2>
+                <p className="section-block-sub">{blunderSource.length} previously missed questions · ~{Math.floor(Math.min(blunderSource.length, FULL_QUIZ_SIZE) * 67 / 60)} min</p>
+              </div>
+            </div>
+            <div className="blunder-card" onClick={() => {
+              promptQuiz('/quiz/rapid', { rapidQuestions: toQuizQuestions(shuffle(blunderSource).slice(0, Math.min(FULL_QUIZ_SIZE, blunderSource.length))) });
+            }}>
+              <div className="blunder-icon"><AlertTriangle size={24}/></div>
+              <div className="fullquiz-body">
+                <div className="blunder-title">Retry Blunders</div>
+                <div className="fullquiz-meta">{Math.min(FULL_QUIZ_SIZE, blunderSource.length)} questions you've missed before</div>
+              </div>
+              <button className="blunder-start" onClick={e => { e.stopPropagation(); promptQuiz('/quiz/rapid', { rapidQuestions: toQuizQuestions(shuffle(blunderSource).slice(0, Math.min(FULL_QUIZ_SIZE, blunderSource.length))) }); }}>
                 Start <ArrowRight size={12} className="btn-arrow" />
               </button>
             </div>

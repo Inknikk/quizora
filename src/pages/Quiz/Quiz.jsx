@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { useParams, useSearchParams, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/useAuth';
-import { getQuizBank, saveResult } from '../../firebase/firestore';
+import { getQuizBank, saveResult, saveBlunders } from '../../firebase/firestore';
 import { updateUserStats } from '../../firebase/auth';
 import { ChevronLeft, ChevronRight, Flag, Clock, CheckCircle, ZapOff, Flame, LogOut, Loader } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -36,6 +36,7 @@ export default function Quiz() {
   const [streak, setStreak] = useState(0);
   const bestStreakRef = useRef(0);
   const [showExitModal, setShowExitModal] = useState(false);
+  const [showUnansweredModal, setShowUnansweredModal] = useState(false);
 
   const isRapid = searchParams.get('rapid') === '1';
 
@@ -94,7 +95,7 @@ export default function Quiz() {
   }, [submitted]);
 
   const handleSubmitRef = useRef(null);
-  useEffect(() => { handleSubmitRef.current = handleSubmit; });
+  useEffect(() => { handleSubmitRef.current = doSubmit; });
   useEffect(() => {
     if (timeLeft === null || submitted) return;
     if (timeLeft <= 0) { handleSubmitRef.current?.(); return; }
@@ -107,7 +108,7 @@ export default function Quiz() {
   const isMulti = q?.correctAnswers.length > 1;
   const qLen = q?.question.length + (q?.options.reduce((s, o) => s + o.length, 0) || 0);
   const isCompact = qLen > 450;
-  const fontScale = Math.min(1.3, Math.max(0.75, 1.0 - (qLen - 250) * 0.001));
+  const fontScale = Math.min(1.15, Math.max(0.85, 1.0 - (qLen - 250) * 0.0006));
 
   function getOptionState(opt) {
     if (!isAnswered) return '';
@@ -156,7 +157,17 @@ export default function Quiz() {
     });
   }
 
-  async function handleSubmit() {
+  function handleSubmitClick() {
+    if (submittingRef.current || submitted) return;
+    const unanswered = questions.filter((_, i) => !questionStatus[i]?.answered).length;
+    if (unanswered > 0) {
+      setShowUnansweredModal(true);
+      return;
+    }
+    doSubmit();
+  }
+
+  async function doSubmit() {
     if (submittingRef.current || submitted) return;
     submittingRef.current = true;
     setSubmitting(true);
@@ -180,6 +191,12 @@ export default function Quiz() {
       const bs = bestStreakRef.current;
       try {
         await saveResult(user.uid, id, correct, questions.length, answers, bs);
+        const wrongAnswers = answers.filter(a => !a.isCorrect).map(a => ({
+          question: a.question,
+          options: a.options,
+          correct: a.correct,
+        }));
+        if (wrongAnswers.length > 0) saveBlunders(user.uid, wrongAnswers);
         const newStreak = await updateUserStats(user.uid, correct, questions.length, bs);
         if (newStreak > 0) setProfile(prev => ({ ...prev, longestStreak: newStreak }));
       } catch { /* silent */ }
@@ -287,11 +304,28 @@ export default function Quiz() {
               Next <ChevronRight size={18}/>
             </button>
           ) : (
-            <button className="btn-submit" onClick={handleSubmit} disabled={submitted || submitting}>
+            <button className="btn-submit" onClick={handleSubmitClick} disabled={submitted || submitting}>
               {submitting ? <><Loader size={16} className="submit-spinner"/> Submitting…</> : 'Submit Quiz'}
             </button>
           )}
         </div>
+
+        {showUnansweredModal && (
+          <div className="modal-overlay" onClick={() => setShowUnansweredModal(false)}>
+            <div className="modal-box" onClick={e => e.stopPropagation()}>
+              <div className="modal-accent" />
+              <div className="modal-body">
+                <div className="modal-icon modal-icon--brand"><LogOut size={22} /></div>
+                <h3 className="modal-title">Unanswered questions</h3>
+                <p className="modal-desc">{questions.filter((_, i) => !questionStatus[i]?.answered).length} question{questions.filter((_, i) => !questionStatus[i]?.answered).length !== 1 ? 's' : ''} haven't been answered. Submit anyway?</p>
+                <div className="modal-actions">
+                  <button className="btn-nav" onClick={() => setShowUnansweredModal(false)}>Review</button>
+                  <button className="btn-submit" onClick={() => { setShowUnansweredModal(false); doSubmit(); }}>Submit</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {showExitModal && (
           <div className="modal-overlay" onClick={() => { setShowExitModal(false); window.history.pushState(null, ''); }}>
