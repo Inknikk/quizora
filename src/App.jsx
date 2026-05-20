@@ -7,6 +7,7 @@ import Home from './pages/Home/Home';
 import Quiz from './pages/Quiz/Quiz';
 import Results from './pages/Results/Results';
 import Profile from './pages/Profile/Profile';
+import Ccp400 from './pages/Ccp400/Ccp400';
 
 function Protected({ children }) {
   const { user, loading } = useAuth();
@@ -30,6 +31,7 @@ export default function App() {
           <Route path="/quiz/:id" element={<Protected><Quiz /></Protected>} />
           <Route path="/results" element={<Protected><Results /></Protected>} />
           <Route path="/profile" element={<Protected><Profile /></Protected>} />
+          <Route path="/ccp400" element={<Protected><Ccp400 /></Protected>} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>

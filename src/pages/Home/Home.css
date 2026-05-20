@@ -154,6 +154,51 @@
 }
 .shuffle-btn:hover { background: var(--accent-bg); border-color: transparent; }
 
+/* ── CCP 400 banner ── */
+@keyframes ccpPulse {
+  0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 40%, transparent); }
+  50% { box-shadow: 0 0 0 12px color-mix(in srgb, var(--accent) 0%, transparent); }
+}
+.ccp400-banner {
+  display:flex; align-items:center; gap:1rem;
+  padding:1rem 1.5rem; margin-bottom:var(--space-xl);
+  border-radius:var(--radius-lg); cursor:pointer;
+  background:linear-gradient(135deg, color-mix(in srgb, var(--accent) 12%, var(--surface)), var(--surface));
+  border:1px solid color-mix(in srgb, var(--accent) 30%, var(--border));
+  animation:ccpPulse 2.5s ease-in-out infinite;
+  transition:transform 0.25s, box-shadow 0.25s;
+  max-width:var(--content-wide); width:100%; align-self:center;
+  position:relative;
+}
+.ccp400-banner:hover { transform:translateY(-3px); border-color:var(--accent); }
+.ccp400-banner-icon {
+  width:48px; height:48px; border-radius:var(--radius-md);
+  background:linear-gradient(135deg, var(--accent), var(--accent2));
+  display:flex; align-items:center; justify-content:center;
+  color:var(--text-on-accent); flex-shrink:0;
+}
+.ccp400-banner-body { flex:1; min-width:0; }
+.ccp400-banner-title { font-size:1rem; font-weight:700; color:var(--text); }
+.ccp400-banner-sub { font-size:0.8rem; color:var(--text-muted); margin-top:0.15rem; }
+.ccp400-badge {
+  flex-shrink:0; padding:0.2rem 0.6rem;
+  border-radius:999px; font-size:0.65rem; font-weight:700;
+  background:linear-gradient(135deg, var(--accent), var(--accent2));
+  color:var(--text-on-accent); letter-spacing:0.5px;
+  animation:ccpBadgePulse 1.5s ease-in-out infinite;
+}
+@keyframes ccpBadgePulse {
+  0%, 100% { opacity:1; }
+  50% { opacity:0.5; }
+}
+@media(max-width:640px) {
+  .ccp400-banner { padding:0.75rem 1rem; gap:0.75rem; }
+  .ccp400-banner-icon { width:40px; height:40px; }
+  .ccp400-banner-icon svg { width:18px; height:18px; }
+  .ccp400-banner-title { font-size:0.9rem; }
+  .ccp400-banner-sub { font-size:0.72rem; }
+}
+
 /* ── full quiz ── */
 .fullquiz-section {
   margin-bottom: var(--space-xl);

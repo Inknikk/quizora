@@ -21,8 +21,9 @@ function parseMarkedBank(text) {
     for (const line of lines) {
       const m = line.match(/^[-*]\s*([A-E])\.\s*(.+)/);
       if (!m) continue;
-      const t = m[2].replace(/✅\s*$/, '').replace(/\*\*/g, '').trim();
-      if (m[2].includes('✅')) correctAnswers.push(t);
+      const raws = m[2].replace(/\*\*/g, '').trim();
+      const t = raws.replace(/\s*\?\s*$/, '').replace(/✅\s*$/, '').trim();
+      if (raws.includes('?') || raws.includes('✅')) correctAnswers.push(t);
       options.push(t);
     }
     if (options.length >= 2 && correctAnswers.length >= 1)
@@ -49,6 +50,10 @@ const BANKS = [
   { file: `${AWS_DIR}/AWS PRACTITIONER 3.md`,  title: 'AWS Practitioner 3', category:'AWS', difficulty:'Easy' },
   { file: `${AWS_DIR}/AWS PRACTITIONER 4.md`,  title: 'AWS Practitioner 4', category:'AWS', difficulty:'Easy' },
   { file: `${AWS_DIR}/AWS PRACTITIONER 5.md`,  title: 'AWS Practitioner 5', category:'AWS', difficulty:'Easy' },
+  { file: `${AWS_DIR}/AWS PRACTITIONER 6.md`,  title: 'AWS Practitioner 6', category:'AWS', difficulty:'Easy' },
+  { file: `${AWS_DIR}/AWS BANK.md`,             title: 'AWS Bank 1',          category:'AWS', difficulty:'Medium' },
+  { file: `${AWS_DIR}/AWS BANK 2.md`,           title: 'AWS Bank 2',          category:'AWS', difficulty:'Medium' },
+  { file: `${AWS_DIR}/CCP 400 formatted.md`,    title: 'CCP 400',             category:'AWS', difficulty:'Medium' },
 ];
 
 async function seed() {

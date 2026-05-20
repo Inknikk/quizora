@@ -217,6 +217,15 @@ export default function Home() {
           </div>
         )}
 
+        <div className="ccp400-banner" onClick={() => navigate('/ccp400')}>
+          <div className="ccp400-banner-icon"><Layers size={22}/></div>
+          <div className="ccp400-banner-body">
+            <div className="ccp400-banner-title">AWS CCP 400 — Massive Challenge</div>
+            <div className="ccp400-banner-sub">400 questions across 8 timed sets · 50 min each</div>
+          </div>
+          <span className="ccp400-badge">NEW</span>
+        </div>
+
         {!loading && banks.length > 0 && allQuestions(banks).length >= FULL_QUIZ_SIZE && (
           <div className="section-block fullquiz-section" style={{ animationDelay: '240ms' }}>
             <div className="section-block-header">
@@ -225,21 +234,21 @@ export default function Home() {
                 <p className="section-block-sub">{FULL_QUIZ_SIZE} random questions from all topics · ~{Math.floor(FULL_QUIZ_SIZE * 67 / 60)} min</p>
               </div>
               <button className="shuffle-btn" onClick={() => {
-                promptQuiz('/quiz/rapid', { rapidQuestions: shuffle(allQuestions(banks)).slice(0, FULL_QUIZ_SIZE) });
+                promptQuiz('/quiz/rapid', { rapidQuestions: shuffle(allQuestions(banks)).slice(0, FULL_QUIZ_SIZE), quizTitle: 'Full Quiz' });
               }}>
                 <RefreshCw size={14} />
                 Generate
               </button>
             </div>
             <div className="fullquiz-card" onClick={() => {
-              promptQuiz('/quiz/rapid', { rapidQuestions: shuffle(allQuestions(banks)).slice(0, FULL_QUIZ_SIZE) });
+              promptQuiz('/quiz/rapid', { rapidQuestions: shuffle(allQuestions(banks)).slice(0, FULL_QUIZ_SIZE), quizTitle: 'Full Quiz' });
             }}>
               <div className="fullquiz-icon"><Layers size={24}/></div>
               <div className="fullquiz-body">
                 <div className="fullquiz-title">Start Full Quiz</div>
                 <div className="fullquiz-meta">{FULL_QUIZ_SIZE} questions across all topics</div>
               </div>
-              <button className="fullquiz-start" onClick={e => { e.stopPropagation(); promptQuiz('/quiz/rapid', { rapidQuestions: shuffle(allQuestions(banks)).slice(0, FULL_QUIZ_SIZE) }); }}>
+              <button className="fullquiz-start" onClick={e => { e.stopPropagation(); promptQuiz('/quiz/rapid', { rapidQuestions: shuffle(allQuestions(banks)).slice(0, FULL_QUIZ_SIZE), quizTitle: 'Full Quiz' }); }}>
                 Start <ArrowRight size={12} className="btn-arrow" />
               </button>
             </div>

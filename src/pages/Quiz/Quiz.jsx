@@ -291,7 +291,7 @@ export default function Quiz() {
         <button className="icon-btn" onClick={() => { if (submitted) navigate('/'); else setShowExitModal(true); }}><ChevronLeft size={20}/></button>
         <div className="quiz-info">
           <span className="quiz-title-sm">
-            {bank ? bank.title + (isRapid ? ' · Rapid' : '') : id === 'blunder' ? 'Blunder Quiz' : 'Rapid Quiz'}
+            {location.state?.quizTitle || (bank ? bank.title + (isRapid ? ' · Rapid' : '') : id === 'blunder' ? 'Blunder Quiz' : 'Rapid Quiz')}
           </span>
           <span className="q-counter">{current + 1} / {questions.length}</span>
         </div>
